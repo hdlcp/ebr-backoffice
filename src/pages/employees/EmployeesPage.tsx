@@ -14,7 +14,12 @@ const initialEmployees: Employee[] = [
   { id: '4', name: 'Jean KOUP', role: 'serveur' }
 ];
 
-const EmployeesPage: React.FC = () => {
+interface EmployeesPageProps {
+  currentPage: string;
+  onNavigate: (page: string) => void;
+}
+
+const EmployeesPage: React.FC<EmployeesPageProps> = ({ currentPage, onNavigate }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
 
@@ -36,15 +41,24 @@ const EmployeesPage: React.FC = () => {
   const handleEdit = (id: string) => {
     // Logique de modification - à implémenter
     console.log('Modifier employé:', id);
+    // TODO: Ouvrir un modal ou naviguer vers page d'édition
   };
 
   const handleDelete = (id: string) => {
     // Logique de suppression - à implémenter
-    console.log('Supprimer employé:', id);
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet employé ?')) {
+      setEmployees(employees.filter(emp => emp.id !== id));
+      console.log('Employé supprimé:', id);
+    }
   };
 
   return (
-    <Layout userName="Marc" userRole="Administrateur">
+    <Layout 
+      userName="Marc" 
+      userRole="Administrateur"
+      currentPage={currentPage}
+      onNavigate={onNavigate}
+    >
       {!showAddForm ? (
         <>
           {/* En-tête de la section */}

@@ -8,14 +8,15 @@ interface MenuItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  path: string; // Ajout du chemin pour la navigation
 }
 
 // Configuration des menus de la sidebar
 const menuItems: MenuItem[] = [
-  { id: 'employees', label: 'GESTION DES EMPLOYÉS', icon: <Users size={20} /> },
-  { id: 'menus', label: 'GESTION DES MENUS', icon: <Menu size={20} /> },
-  { id: 'tables', label: 'GESTION DES TABLES', icon: <Settings size={20} /> },
-  { id: 'stats', label: 'VOIR LES STATS', icon: <BarChart3 size={20} /> }
+  { id: 'employees', label: 'GESTION DES EMPLOYÉS', icon: <Users size={20} />, path: '/employees' },
+  { id: 'menus', label: 'GESTION DES MENUS', icon: <Menu size={20} />, path: '/menus' },
+  { id: 'tables', label: 'GESTION DES TABLES', icon: <Settings size={20} />, path: '/tables' },
+  { id: 'stats', label: 'VOIR LES STATS', icon: <BarChart3 size={20} />, path: '/stats' }
 ];
 
 interface SidebarProps {
@@ -28,11 +29,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
     <>
       {/* Version Desktop - Sidebar fixe */}
       <div 
-        className="fixed left-0 top-0 h-[812px] w-[236px] rounded-[20px] flex flex-col items-center py-6 z-10 lg:block hidden"
+        className="fixed left-0 top-0 h-[812px] w-[236px] flex flex-col py-6 z-10 lg:block hidden"
         style={{ backgroundColor: colors.container }}
       >
-        {/* Logo */}
-        <div className="mb-8">
+        {/* Logo - Centré horizontalement */}
+        <div className="mb-8 w-full flex justify-center">
           <div className="w-[148px] h-[148px] flex items-center justify-center">
             <img 
               src="/logos/logo_ebr.png" 
@@ -42,15 +43,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
           </div>
         </div>
 
-        {/* Menu Items */}
-        <div className="flex flex-col gap-3 px-4">
+        {/* Menu Items - Centrés */}
+        <div className="flex flex-col gap-3 items-center px-4">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onMenuChange(item.id)}
               className={`
                 w-[182px] h-[45px] rounded-[20px] flex items-center justify-start gap-3 px-4
-                text-sm font-medium transition-all duration-200 relative
+                text-sm font-medium transition-all duration-200 relative hover:opacity-80
                 ${activeMenu === item.id ? 'text-gray-700' : 'text-gray-600 hover:text-gray-700'}
               `}
               style={{ 
@@ -77,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeMenu, onMenuChange }) => {
               key={item.id}
               onClick={() => onMenuChange(item.id)}
               className={`
-                flex flex-col items-center justify-center gap-1 p-2 rounded-lg
+                flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors
                 ${activeMenu === item.id ? 'text-gray-700' : 'text-gray-600'}
               `}
               style={{ fontFamily: 'Montserrat, sans-serif' }}

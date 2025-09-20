@@ -10,7 +10,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ userName, userRole = "Administrateur" }) => {
   return (
     <div 
-      className="fixed top-0 left-0 lg:left-[250px] right-0 lg:w-[1014px] h-[52px] rounded-[10px] flex items-center justify-between px-6 z-10 mx-auto lg:mx-0"
+      className="fixed top-2 left-4 lg:left-[254px] right-4 h-[52px] rounded-[10px] flex items-center justify-between px-6 z-10"
       style={{ backgroundColor: colors.container }}
     >
       {/* Informations utilisateur à gauche */}
