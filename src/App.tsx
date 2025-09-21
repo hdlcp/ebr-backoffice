@@ -2,16 +2,10 @@
 import React, { useState } from 'react';
 import { LoginPage } from './pages/auth';
 import { EmployeesPage } from './pages/employees';
-// Import des autres pages (à créer plus tard)
-// import { MenusPage } from './pages/menus';
-// import { TablesPage } from './pages/tables';
-// import { StatsPage } from './pages/stats';
+import { MenusPage } from './pages/menus';
+import { TablesPage } from './pages/tables';
+import { StatsPage } from './pages/stats';
 import './index.css';
-
-// Composants temporaires pour les pages non créées
-const MenusPage: React.FC = () => <div className="p-8"><h1 style={{fontFamily: 'Montserrat, sans-serif'}}>Page Gestion des Menus - En cours de développement</h1></div>;
-const TablesPage: React.FC = () => <div className="p-8"><h1 style={{fontFamily: 'Montserrat, sans-serif'}}>Page Gestion des Tables - En cours de développement</h1></div>;
-const StatsPage: React.FC = () => <div className="p-8"><h1 style={{fontFamily: 'Montserrat, sans-serif'}}>Page Statistiques - En cours de développement</h1></div>;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,11 +30,11 @@ function App() {
       case 'employees':
         return <EmployeesPage currentPage={currentPage} onNavigate={handleNavigate} />;
       case 'menus':
-        return <MenusPage />;
+        return <MenusPage currentPage={currentPage} onNavigate={handleNavigate} />;
       case 'tables':
-        return <TablesPage />;
+        return <TablesPage currentPage={currentPage} onNavigate={handleNavigate} />;
       case 'stats':
-        return <StatsPage />;
+        return <StatsPage currentPage={currentPage} onNavigate={handleNavigate} />;
       default:
         return <EmployeesPage currentPage={currentPage} onNavigate={handleNavigate} />;
     }

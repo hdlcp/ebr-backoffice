@@ -171,9 +171,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onCancel, onSubmit }) => {
             onClick={onCancel}
             className="w-full lg:w-auto lg:px-8 h-[56px] rounded-[10px] font-bold text-lg hover:opacity-90 transition-opacity"
             style={{
-              backgroundColor: colors.container,
+              backgroundColor: colors.danger,
               fontFamily: 'Montserrat, sans-serif',
-              color: colors.text.primary
+              color: colors.text.white
             }}
           >
             ANNULER
