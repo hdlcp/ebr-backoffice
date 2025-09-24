@@ -8,6 +8,7 @@ import { EmployeesPage } from './pages/employees';
 import { MenusPage } from './pages/menus';
 import { TablesPage } from './pages/tables';
 import { StatsPage } from './pages/stats';
+import { DashboardPage } from './pages/dashboard';
 import { RegistrationFormData, Offer, PaymentInfo } from './types/registration';
 import './index.css';
 
@@ -15,7 +16,7 @@ type AppState = 'login' | 'registration' | 'offers' | 'payment' | 'dashboard';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('login');
-  const [currentPage, setCurrentPage] = useState('employees');
+  const [currentPage, setCurrentPage] = useState('dashboard');
   
   // États pour le processus d'inscription
   const [registrationData, setRegistrationData] = useState<RegistrationFormData | null>(null);
@@ -75,6 +76,8 @@ function App() {
   // Fonction pour rendre la page actuelle du dashboard
   const renderDashboardPage = () => {
     switch (currentPage) {
+      case 'dashboard':
+        return <DashboardPage currentPage={currentPage} onNavigate={handleNavigate} />;
       case 'employees':
         return <EmployeesPage currentPage={currentPage} onNavigate={handleNavigate} />;
       case 'menus':

@@ -1,6 +1,6 @@
 // src/components/layout/Sidebar.tsx
 import React from 'react';
-import { User, Users, Menu, Settings, BarChart3 } from 'lucide-react';
+import { User, Users, Menu, Settings, BarChart3,LayoutDashboard,LogOut} from 'lucide-react';
 import { colors } from '../../config/colors';
 
 // Interface pour les éléments du menu
@@ -13,10 +13,12 @@ interface MenuItem {
 
 // Configuration des menus de la sidebar
 const menuItems: MenuItem[] = [
-  { id: 'employees', label: 'GESTION DES EMPLOYÉS', icon: <Users size={20} />, path: '/employees' },
-  { id: 'menus', label: 'GESTION DES MENUS', icon: <Menu size={20} />, path: '/menus' },
-  { id: 'tables', label: 'GESTION DES TABLES', icon: <Settings size={20} />, path: '/tables' },
-  { id: 'stats', label: 'VOIR LES STATS', icon: <BarChart3 size={20} />, path: '/stats' }
+  { id: "dashboard", label: "TABLEAU DE BORD", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
+  { id: "employees", label: "GESTION DES EMPLOYÉS", icon: <Users size={20} />, path: "/employees" },
+  { id: "menus", label: "GESTION DES MENUS", icon: <Menu size={20} />, path: "/menus" },
+  { id: "tables", label: "GESTION DES TABLES", icon: <Settings size={20} />, path: "/tables" },
+  { id: "stats", label: "VOIR LES STATS", icon: <BarChart3 size={20} />, path: "/stats" },
+  { id: "logout", label: "DÉCONNEXION", icon: <LogOut size={20} />, path: "/logout" }
 ];
 
 interface SidebarProps {
