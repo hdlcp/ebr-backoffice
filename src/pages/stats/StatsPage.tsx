@@ -60,20 +60,65 @@ const mockValidations: DailyValidation[] = [
   }
 ];
 
+// Fonction utilitaire pour formater une date
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
+// Fonction utilitaire pour formater une période
+const formatPeriod = (startDate: string, endDate: string) => {
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+  return start === end ? start : `${start} - ${end}`;
+};
+
+// Composant pour afficher la période courante
+const PeriodHeader: React.FC<{ 
+  startDate: string; 
+  endDate: string; 
+  isSearched: boolean 
+}> = ({ startDate, endDate, isSearched }) => {
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center gap-2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
+          <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+        </svg>
+        <span className="font-semibold text-blue-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          {isSearched ? 'Période recherchée : ' : 'Aujourd\'hui : '}
+        </span>
+        <span className="font-bold text-blue-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          {formatPeriod(startDate, endDate)}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 // Composant pour une validation individuelle
 const ValidationCard: React.FC<{ validation: DailyValidation }> = ({ validation }) => {
   return (
     <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
-      {/* En-tête avec serveur */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-          </svg>
+      {/* En-tête avec serveur et date */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+            </svg>
+          </div>
+          <span className="font-semibold text-green-600" 
+                style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            serveur : {validation.serverName}
+          </span>
         </div>
-        <span className="font-semibold text-green-600" 
-              style={{ fontFamily: 'Montserrat, sans-serif' }}>
-          serveur : {validation.serverName}
+        <span className="text-sm text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          {formatDate(validation.validatedAt)}
         </span>
       </div>
 
@@ -171,8 +216,14 @@ interface StatsPageProps {
 
 const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'daily' | 'history'>('daily');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [searchMonth, setSearchMonth] = useState('');
+  
+  // États pour la recherche par période
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
+  const [currentStartDate, setCurrentStartDate] = useState(today);
+  const [currentEndDate, setCurrentEndDate] = useState(today);
+  const [isSearched, setIsSearched] = useState(false);
 
   // Calculer les statistiques par serveur
   const serverStats: ServerStats[] = mockValidations.reduce((acc, validation) => {
@@ -202,9 +253,20 @@ const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
   const totalEspeces = serverStats.reduce((sum, s) => sum + s.totalEspeces, 0);
   const grandTotal = totalMomo + totalEspeces;
 
-  const handleSearchMonth = () => {
-    console.log('Recherche pour le mois:', searchMonth);
+  const handleSearch = () => {
+    setCurrentStartDate(startDate);
+    setCurrentEndDate(endDate);
+    setIsSearched(true);
+    console.log('Recherche pour la période:', startDate, 'à', endDate);
     // Logique de recherche à implémenter
+  };
+
+  const resetToToday = () => {
+    setStartDate(today);
+    setEndDate(today);
+    setCurrentStartDate(today);
+    setCurrentEndDate(today);
+    setIsSearched(false);
   };
 
   return (
@@ -252,13 +314,20 @@ const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
         </div>
       </div>
 
+      {/* En-tête de période */}
+      <PeriodHeader 
+        startDate={currentStartDate} 
+        endDate={currentEndDate} 
+        isSearched={isSearched}
+      />
+
       {activeTab === 'daily' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Colonne gauche - Points par serveur */}
           <div>
             <h2 className="text-lg font-bold mb-4" 
                 style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-              Points de la journée
+              Points de la période
             </h2>
             
             {serverStats.map((server) => (
@@ -307,24 +376,24 @@ const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
           <div>
             <h2 className="text-lg font-bold mb-4" 
                 style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-              Recherche et statistiques
+              Recherche par période
             </h2>
             
             <div className="bg-white rounded-lg p-6 mb-4">
               <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Recherche par période
+                Sélectionner une période
               </h3>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2" 
                          style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Date sélectionnée
+                    Date de début
                   </label>
                   <input
                     type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   />
@@ -333,31 +402,42 @@ const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
                 <div>
                   <label className="block text-sm font-medium mb-2" 
                          style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Recherche mensuelle
+                    Date de fin
                   </label>
                   <input
-                    type="month"
-                    value={searchMonth}
-                    onChange={(e) => setSearchMonth(e.target.value)}
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
                     className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   />
                 </div>
                 
-                <button
-                  onClick={handleSearchMonth}
-                  className="w-full h-[48px] rounded-[10px] text-white font-bold text-lg"
-                  style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
-                >
-                  RECHERCHER
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSearch}
+                    className="flex-1 h-[48px] rounded-[10px] text-white font-bold text-lg"
+                    style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    RECHERCHER
+                  </button>
+                  
+                  <button
+                    onClick={resetToToday}
+                    className="h-[48px] px-4 rounded-[10px] border border-gray-300 text-gray-700 font-semibold"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Aujourd'hui
+                  </button>
+                </div>
               </div>
             </div>
             
             {/* Statistiques rapides */}
             <div className="bg-white rounded-lg p-6">
               <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Statistiques du jour
+                Statistiques de la période
               </h3>
               
               <div className="grid grid-cols-2 gap-4">

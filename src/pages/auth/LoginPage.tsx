@@ -9,6 +9,7 @@ interface LoginFormData {
 
 interface LoginPageProps {
   onLogin: () => void;
+  onSwitchToRegistration: () => void;
 }
 
 // Configuration des couleurs selon vos spécifications
@@ -20,7 +21,7 @@ const colors = {
   error: '#FF4444'
 };
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }) => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -200,6 +201,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     'Se connecter'
                   )}
                 </button>
+              </div>
+
+              {/* Lien vers inscription */}
+              <div className="text-center pt-4">
+                <p style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}>
+                  Vous n'avez pas de compte ?{' '}
+                  <button
+                    onClick={onSwitchToRegistration}
+                    className="font-semibold hover:underline"
+                    style={{ color: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Inscrivez-vous ici
+                  </button>
+                </p>
               </div>
             </div>
           </div>
