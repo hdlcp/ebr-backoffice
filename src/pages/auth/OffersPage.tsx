@@ -61,6 +61,7 @@ const offers: Offer[] = [
 
 interface OffersPageProps {
   registrationData: RegistrationFormData;
+  registeredUser: any; // Données de l'utilisateur inscrit
   onOfferSelected: (offer: Offer) => void;
 }
 
@@ -92,7 +93,7 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
         <div className="text-center mb-12">
           <div className="mb-6">
             <img 
-              src="/logos/logo_ebr_blanc.png" 
+              src="/logos/logo_ebr.png" 
               alt="eBR Logo" 
               className="w-32 h-32 mx-auto object-contain" 
             />
@@ -101,7 +102,7 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
             className="text-3xl font-bold text-white mb-4"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Bienvenue {registrationData.firstName} !
+            Bienvenue {registrationData.firstname} !
           </h1>
           <p 
             className="text-xl text-white opacity-90"
@@ -125,7 +126,7 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
               {/* Badge "Populaire" */}
               {offer.isPopular && (
                 <div 
-                  className="absolute left-1/2 transform -translate-x-1/2 px-6 py-1 rounded-full text-white text-sm font-bold z-10"
+                  className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-6 py-1 rounded-full text-white text-sm font-bold z-10"
                   style={{ backgroundColor: colors.primary }}
                 >
                   LE PLUS POPULAIRE

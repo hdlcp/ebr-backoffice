@@ -1,18 +1,18 @@
 // src/pages/auth/LoginPage.tsx
 import React, { useState } from 'react';
+import { authService } from '../../services/api/authService';
+import { LoginResponse } from '../../types/auth';
 
-// Types
 interface LoginFormData {
   email: string;
   password: string;
 }
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (loginData: LoginResponse) => void;
   onSwitchToRegistration: () => void;
 }
 
-// Configuration des couleurs selon vos spécifications
 const colors = {
   primary: '#007A3F',
   container: '#E4D1B0',
@@ -35,7 +35,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
       ...prev,
       [name]: value
     }));
-    // Effacer l'erreur quand l'utilisateur tape
     if (error) setError('');
   };
 
@@ -48,20 +47,37 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
       // Validation basique
       if (!formData.email || !formData.password) {
         setError('Veuillez remplir tous les champs');
+        setIsLoading(false);
         return;
       }
 
-      // Simulation d'appel API - à remplacer par votre vraie API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Appel à l'API de connexion
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Vérifier si la réponse contient des données (succès)
+      if (response.data) {
+        // Sauvegarder le token dans le localStorage
+        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('entreprises', JSON.stringify(response.data.entreprises));
+        
+        // Appel de la fonction onLogin avec les données de connexion
+        onLogin(response.data);
+      } else if (response.error) {
+        // Gérer les erreurs retournées par l'API
+        // response.error contient déjà le message 'detail' de l'API
+        setError(response.error);
+      } else {
+        setError('Erreur de connexion. Veuillez réessayer.');
+      }
       
-      // Ici vous intégrerez votre API de connexion
-      console.log('Données de connexion:', formData);
-      
-      // Appel de la fonction onLogin après une connexion réussie
-      onLogin();
-      
-    } catch (err) {
-      setError('Erreur de connexion. Veuillez réessayer.');
+    } catch (err: any) {
+      // Gestion des erreurs inattendues (réseau, etc.)
+      console.error('Erreur de connexion:', err);
+      setError('Erreur de connexion. Veuillez vérifier votre connexion internet.');
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +85,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Image de fond - utilisant une image temporaire */}
+      {/* Image de fond */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ 
@@ -130,7 +146,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
             </h2>
 
             {/* Formulaire */}
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Champ Email */}
               <div>
                 <input
@@ -184,7 +200,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
               {/* Bouton Se connecter */}
               <div className="flex justify-center pt-4">
                 <button
-                  onClick={handleSubmit}
+                  type="submit"
                   disabled={isLoading}
                   className="w-[174px] h-[49px] rounded-[20px] text-white font-semibold transition-all duration-200 hover:opacity-90 focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ 
@@ -208,6 +224,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
                 <p style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}>
                   Vous n'avez pas de compte ?{' '}
                   <button
+                    type="button"
                     onClick={onSwitchToRegistration}
                     className="font-semibold hover:underline"
                     style={{ color: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
@@ -216,7 +233,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
                   </button>
                 </p>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>

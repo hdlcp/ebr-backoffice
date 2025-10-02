@@ -1,54 +1,40 @@
 // src/types/auth.ts
 
-export interface LoginCredentials {
+export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface User {
-  id: string;
+export interface UserInfo {
+  username: string;
+  firstname: string;
+  lastname: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  avatar?: string;
-  isActive: boolean;
-  lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  role: string;
+  is_active: boolean;
+  matricule: string | null;
+  id: number;
 }
 
-export enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  EMPLOYEE = 'employee',
-  WAITER = 'waiter'
-}
-
-export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-export interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  refreshToken: () => Promise<void>;
-}
-
-export interface LoginFormData {
+export interface Entreprise {
+  id: number;
+  raison_sociale: string;
+  telephone: string;
   email: string;
-  password: string;
+  site_web: string;
+  numero_ifu: string;
+  numero_registre_commerce: string;
+  is_active: boolean;
+  code_entreprise: string;
 }
 
-export interface ApiError {
-  message: string;
-  code: string;
-  statusCode: number;
-  details?: Record<string, any>;
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: UserInfo;
+  entreprises: Entreprise[];
+}
+
+export interface LoginError {
+  detail: string;
 }
