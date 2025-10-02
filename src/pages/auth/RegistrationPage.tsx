@@ -112,7 +112,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onRegistration, onS
             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
               {/* Raison sociale */}
               <div>
-                <input type="text" name="raison_sociale" placeholder="Raison sociale *" value={formData.raison_sociale}
+                <input type="text" name="raison_sociale" placeholder="Nom de l'entreprise *" value={formData.raison_sociale}
                   onChange={handleInputChange}
                   className={`w-full h-[44px] px-4 rounded-[15px] border-none outline-none text-gray-800 placeholder-gray-500 transition-all ${
                     errors.raison_sociale ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'

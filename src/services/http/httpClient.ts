@@ -1,6 +1,6 @@
 // src/services/http/httpClient.ts
 
-const API_BASE_URL = 'https://ebr-backend-liku.onrender.com';
+const API_BASE_URL = 'http://146.190.129.166:8000';
 
 export interface ApiResponse<T> {
   data?: T;
