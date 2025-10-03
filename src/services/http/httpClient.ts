@@ -24,15 +24,21 @@ class HttpClient {
         ...options,
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...options.headers, // merge avec headers custom
         },
       });
 
-      const data = await response.json();
+      // Si le body est vide (DELETE par ex.), éviter une erreur
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = null;
+      }
 
       if (!response.ok) {
         return {
-          error: data.detail || 'Une erreur est survenue',
+          error: data?.detail || 'Une erreur est survenue',
           statusCode: response.status,
         };
       }
@@ -49,26 +55,28 @@ class HttpClient {
     }
   }
 
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  async get<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET', ...options });
   }
 
-  async post<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, body: any, options: RequestInit = {}): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
+      ...options,
     });
   }
 
-  async put<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, body: any, options: RequestInit = {}): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(body),
+      ...options,
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+  async delete<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE', ...options });
   }
 }
 

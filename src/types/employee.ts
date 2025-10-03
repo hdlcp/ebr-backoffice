@@ -1,30 +1,57 @@
 // src/types/employee.ts
 
+export type EmployeeRole = 'gerant' | 'serveur';
+
 export interface Employee {
-  id: string;
-  name: string;
-  role: 'gerant' | 'serveur';
-  isOpen?: boolean;
-  email?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  id: number;
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  role: EmployeeRole;
+  is_active: boolean;
+  matricule: string;
+  entreprise_id: number;
+  isOpen?: boolean; // Pour l'UI locale
 }
 
-export interface CreateEmployeeData {
-  name: string;
-  role: 'gerant' | 'serveur';
+export interface CreateEmployeeRequest {
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  role: EmployeeRole;
+  matricule: string;
+  entreprise_id: number;
   password: string;
-  email?: string;
+}
+
+export interface CreateEmployeeResponse {
+  id: number;
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  role: EmployeeRole;
+  is_active: boolean;
+  matricule: string;
+  entreprise_id: number;
+}
+
+export interface GetEmployeesParams {
+  entreprise_id: number;
+  skip?: number;
+  limit?: number;
 }
 
 export interface EmployeeFormData {
-  name: string;
-  role: 'gerant' | 'serveur';
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  role: EmployeeRole;
+  matricule: string;
+  entreprise_id: number;
   password: string;
   confirmPassword: string;
-}
-
-export enum EmployeeRole {
-  GERANT = 'gerant',
-  SERVEUR = 'serveur'
 }

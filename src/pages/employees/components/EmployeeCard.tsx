@@ -16,34 +16,75 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
   onEdit, 
   onDelete 
 }) => {
+  const fullName = `${employee.firstname} ${employee.lastname}`;
+  const isActive = employee.is_active;
+
   return (
     <div 
-      className="w-full max-w-[994px] h-[79px] rounded-[10px] flex items-center justify-between px-4 lg:px-6 mx-auto"
+      className="w-full max-w-[994px] rounded-[10px] flex items-center justify-between px-4 lg:px-6 py-4 mx-auto"
       style={{ backgroundColor: colors.white }}
     >
       {/* Informations employé */}
-      <div className="flex flex-col">
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span 
+            className="font-semibold text-sm lg:text-base truncate"
+            style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
+          >
+            {fullName}
+          </span>
+          
+          {/* Badge statut */}
+          <span 
+            className={`px-2 py-0.5 rounded text-xs font-medium ${
+              isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+            }`}
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            {isActive ? 'Actif' : 'Inactif'}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-3 mt-1 flex-wrap">
+          <span 
+            className="text-xs lg:text-sm capitalize"
+            style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}
+          >
+            {employee.role === 'gerant' ? 'Gérant' : 'Serveur'}
+          </span>
+          
+          <span 
+            className="text-xs text-gray-500"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            @{employee.username}
+          </span>
+          
+          {employee.matricule && (
+            <span 
+              className="text-xs text-gray-500"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              Mat: {employee.matricule}
+            </span>
+          )}
+        </div>
+        
         <span 
-          className="font-semibold text-sm lg:text-base"
-          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
+          className="text-xs text-gray-500 mt-1 truncate"
+          style={{ fontFamily: 'Montserrat, sans-serif' }}
         >
-          {employee.name}
-        </span>
-        <span 
-          className="text-xs lg:text-sm capitalize"
-          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}
-        >
-          {employee.role}
+          {employee.email}
         </span>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 lg:gap-4">
+      <div className="flex items-center gap-2 lg:gap-4 ml-4">
         {/* Bouton Ouvrir/Fermer pour les gérants */}
         {employee.role === 'gerant' && (
           <button
-            onClick={() => onToggleOpen(employee.id)}
-            className="w-[120px] lg:w-[171px] h-[40px] lg:h-[49px] rounded-[20px] text-white font-bold text-xs lg:text-sm transition-all duration-200 hover:opacity-90"
+            onClick={() => onToggleOpen(employee.id.toString())}
+            className="w-[100px] lg:w-[130px] h-[36px] lg:h-[40px] rounded-[20px] text-white font-bold text-xs lg:text-sm transition-all duration-200 hover:opacity-90"
             style={{
               backgroundColor: employee.isOpen ? colors.danger : colors.primary,
               fontFamily: 'Montserrat, sans-serif',
@@ -56,7 +97,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
         {/* Icône de modification */}
         <button
-          onClick={() => onEdit(employee.id)}
+          onClick={() => onEdit(employee.id.toString())}
           className="w-[30px] h-[30px] flex items-center justify-center text-orange-500 hover:text-orange-600 transition-colors"
           title="Modifier"
         >
@@ -67,7 +108,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
         {/* Icône de suppression */}
         <button
-          onClick={() => onDelete(employee.id)}
+          onClick={() => onDelete(employee.id.toString())}
           className="w-[30px] h-[30px] flex items-center justify-center text-red-500 hover:text-red-600 transition-colors"
           title="Supprimer"
         >
