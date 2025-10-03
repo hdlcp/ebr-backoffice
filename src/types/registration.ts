@@ -82,3 +82,4 @@ export interface RegistrationData {
   selectedOffer: Offer;
   paymentInfo: PaymentInfo;
 }
+

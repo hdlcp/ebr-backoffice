@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import Layout from '../../components/layout/Layout';
+import Sidebar from '../../components/layout/Sidebar';
+import Header from '../../components/layout/Header';
+import { CommonPageProps } from '../../types/common';
 import { Table } from '../../types/table';
 import { colors } from '../../config/colors';
 
@@ -243,13 +245,16 @@ const TableForm: React.FC<{
 };
 
 // Composant principal de la page
-interface TablesPageProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
-}
-
-const TablesPage: React.FC<TablesPageProps> = ({ currentPage, onNavigate }) => {
-  const [tablesActive, setTablesActive] = useState(true); // État pour activer/désactiver les tables
+const TablesPage: React.FC<CommonPageProps> = ({ 
+  userName,
+  userRole,
+  companies,
+  activeCompany,
+  onCompanySwitch,
+  onAddCompany,
+  onLogout
+}) => {
+  const [tablesActive, setTablesActive] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [tables, setTables] = useState<Table[]>(initialTables);
 
@@ -277,110 +282,121 @@ const TablesPage: React.FC<TablesPageProps> = ({ currentPage, onNavigate }) => {
   };
 
   return (
-    <Layout 
-      userName="Marc" 
-      userRole="Administrateur"
-      currentPage={currentPage}
-      onNavigate={onNavigate}
-    >
-      {!showAddForm ? (
-        <>
-          {/* En-tête de la section */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-            <h1 
-              className="text-xl lg:text-2xl font-bold"
-              style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
-            >
-              GESTION DES TABLES
-            </h1>
-            
-            {/* Toggle Activer/Désactiver et bouton Ajouter */}
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              {/* Boutons Activer/Désactiver */}
-              <div className="flex rounded-[20px] overflow-hidden">
-                <button
-                  onClick={() => setTablesActive(true)}
-                  className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                    tablesActive ? 'text-white' : 'text-gray-700'
-                  }`}
-                  style={{
-                    backgroundColor: tablesActive ? colors.primary : colors.white,
-                    fontFamily: 'Montserrat, sans-serif'
-                  }}
-                >
-                  ACTIVER
-                </button>
-                <button
-                  onClick={() => setTablesActive(false)}
-                  className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                    !tablesActive ? 'text-white' : 'text-gray-700'
-                  }`}
-                  style={{
-                    backgroundColor: !tablesActive ? '#D32F2F' : colors.white,
-                    fontFamily: 'Montserrat, sans-serif'
-                  }}
-                >
-                  DÉSACTIVEZ
-                </button>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar avec déconnexion */}
+      <Sidebar onLogout={onLogout} />
+      
+      {/* Header avec données utilisateur */}
+      <Header 
+        userName={userName}
+        userRole={userRole}
+        companies={companies}
+        activeCompany={activeCompany}
+        onCompanySwitch={onCompanySwitch}
+        onAddCompany={onAddCompany}
+      />
 
-              {/* Bouton Ajouter (visible seulement si les tables sont activées) */}
-              {tablesActive && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="w-full sm:w-[198px] h-[46px] rounded-[20px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                  style={{
-                    backgroundColor: colors.container,
-                    fontFamily: 'Montserrat, sans-serif',
-                    color: colors.text.primary
-                  }}
-                >
-                  AJOUTER UNE TABLE +
-                </button>
-              )}
-            </div>
-          </div>
+      {/* Contenu principal */}
+      <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
+        {!showAddForm ? (
+          <>
+            {/* En-tête de la section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+              <h1 
+                className="text-xl lg:text-2xl font-bold"
+                style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
+              >
+                GESTION DES TABLES
+              </h1>
+              
+              {/* Toggle Activer/Désactiver et bouton Ajouter */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Boutons Activer/Désactiver */}
+                <div className="flex rounded-[20px] overflow-hidden">
+                  <button
+                    onClick={() => setTablesActive(true)}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                      tablesActive ? 'text-white' : 'text-gray-700'
+                    }`}
+                    style={{
+                      backgroundColor: tablesActive ? colors.primary : colors.white,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                  >
+                    ACTIVER
+                  </button>
+                  <button
+                    onClick={() => setTablesActive(false)}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                      !tablesActive ? 'text-white' : 'text-gray-700'
+                    }`}
+                    style={{
+                      backgroundColor: !tablesActive ? '#D32F2F' : colors.white,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                  >
+                    DÉSACTIVEZ
+                  </button>
+                </div>
 
-          {/* Contenu conditionnel */}
-          {tablesActive ? (
-            /* Liste des tables */
-            <div className="space-y-4">
-              {tables.map((table) => (
-                <TableCard
-                  key={table.id}
-                  table={table}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          ) : (
-            /* Message quand les tables sont désactivées */
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <p 
-                  className="text-xl font-semibold text-gray-500"
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}
-                >
-                  Les tables sont désactivées
-                </p>
-                <p 
-                  className="text-sm text-gray-400 mt-2"
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}
-                >
-                  Activez les tables pour voir la liste et pouvoir en ajouter
-                </p>
+                {/* Bouton Ajouter (visible seulement si les tables sont activées) */}
+                {tablesActive && (
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="w-full sm:w-[198px] h-[46px] rounded-[20px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                    style={{
+                      backgroundColor: colors.container,
+                      fontFamily: 'Montserrat, sans-serif',
+                      color: colors.text.primary
+                    }}
+                  >
+                    AJOUTER UNE TABLE +
+                  </button>
+                )}
               </div>
             </div>
-          )}
-        </>
-      ) : (
-        <TableForm 
-          onCancel={() => setShowAddForm(false)}
-          onSubmit={handleAddTable}
-        />
-      )}
-    </Layout>
+
+            {/* Contenu conditionnel */}
+            {tablesActive ? (
+              /* Liste des tables */
+              <div className="space-y-4">
+                {tables.map((table) => (
+                  <TableCard
+                    key={table.id}
+                    table={table}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Message quand les tables sont désactivées */
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <p 
+                    className="text-xl font-semibold text-gray-500"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Les tables sont désactivées
+                  </p>
+                  <p 
+                    className="text-sm text-gray-400 mt-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Activez les tables pour voir la liste et pouvoir en ajouter
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <TableForm 
+            onCancel={() => setShowAddForm(false)}
+            onSubmit={handleAddTable}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 

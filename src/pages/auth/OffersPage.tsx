@@ -1,15 +1,16 @@
+// src/pages/auth/OffersPage.tsx
 import React, { useState } from 'react';
-import { Offer, RegistrationFormData } from '../../types/registration';
+import { useNavigate } from 'react-router-dom';
+import { RegistrationFormData, RegistrationApiResponse, Offer } from '../../types/registration';
 
 const colors = {
   primary: '#007A3F',
   container: '#E4D1B0',
   white: '#FFFFFF',
-  text: '#333333',
-  error: '#FF4444'
+  text: '#333333'
 };
 
-// Offres disponibles
+// Liste des offres
 const offers: Offer[] = [
   {
     id: 'basic',
@@ -18,10 +19,10 @@ const offers: Offer[] = [
     duration: '/ mois',
     features: [
       'Gestion de 2 serveurs maximum',
-      'Jusqu\'à 10 tables',
+      'Jusqu’à 10 tables',
       'Gestion des menus de base',
       'Support par email',
-      '30 jours d\'essai gratuit'
+      '30 jours d’essai gratuit'
     ],
     color: '#3B82F6'
   },
@@ -32,7 +33,7 @@ const offers: Offer[] = [
     duration: '/ mois',
     features: [
       'Gestion de 10 serveurs maximum',
-      'Jusqu\'à 50 tables',
+      'Jusqu’à 50 tables',
       'Gestion complète des menus et packs',
       'Statistiques avancées',
       'Support prioritaire 24/7',
@@ -61,54 +62,59 @@ const offers: Offer[] = [
 
 interface OffersPageProps {
   registrationData: RegistrationFormData;
-  registeredUser: any; // Données de l'utilisateur inscrit
+  registeredUser: RegistrationApiResponse;
   onOfferSelected: (offer: Offer) => void;
 }
 
-const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelected }) => {
+const OffersPage: React.FC<OffersPageProps> = ({
+  registrationData,
+  registeredUser,
+  onOfferSelected
+}) => {
+  const navigate = useNavigate();
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
   const handleOfferSelect = (offer: Offer) => {
     setSelectedOfferId(offer.id);
-    onOfferSelected(offer);
+    onOfferSelected(offer); // App.tsx va gérer la suite (paiement/modal)
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Image de fond */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
+        style={{
           backgroundImage: `url('/images/login-background.jpg')`,
           filter: 'blur(1px) brightness(0.7)'
         }}
       />
-      
+
       {/* Overlay sombre */}
       <div className="absolute inset-0 bg-black bg-opacity-30" />
 
       {/* Container principal */}
       <div className="relative z-10 w-full max-w-7xl mx-auto">
-        {/* En-tête avec logo et message de bienvenue */}
+        {/* En-tête */}
         <div className="text-center mb-12">
           <div className="mb-6">
-            <img 
-              src="/logos/logo_ebr.png" 
-              alt="eBR Logo" 
-              className="w-32 h-32 mx-auto object-contain" 
+            <img
+              src="/logos/logo_ebr_blanc.png"
+              alt="eBR Logo"
+              className="w-32 h-32 mx-auto object-contain"
             />
           </div>
-          <h1 
+          <h1
             className="text-3xl font-bold text-white mb-4"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Bienvenue {registrationData.firstname} !
+            Bienvenue {registeredUser.firstname || registrationData.firstname} !
           </h1>
-          <p 
+          <p
             className="text-xl text-white opacity-90"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Choisissez l'offre qui convient le mieux à votre entreprise
+            Choisissez l’offre qui convient le mieux à votre entreprise
           </p>
         </div>
 
@@ -125,8 +131,8 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
             >
               {/* Badge "Populaire" */}
               {offer.isPopular && (
-                <div 
-                  className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-6 py-1 rounded-full text-white text-sm font-bold z-10"
+                <div
+                  className="absolute left-1/2 transform -translate-x-1/2 px-6 py-1 rounded-full text-white text-sm font-bold z-10"
                   style={{ backgroundColor: colors.primary }}
                 >
                   LE PLUS POPULAIRE
@@ -134,31 +140,29 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
               )}
 
               {/* En-tête colorée */}
-              <div 
+              <div
                 className="h-32 flex items-center justify-center"
                 style={{ backgroundColor: offer.color }}
               >
-                <div className="text-center">
-                  <h3 
-                    className="text-2xl font-bold text-white"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  >
-                    {offer.name}
-                  </h3>
-                </div>
+                <h3
+                  className="text-2xl font-bold text-white"
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
+                  {offer.name}
+                </h3>
               </div>
 
-              {/* Contenu de la carte */}
+              {/* Contenu */}
               <div className="p-8">
                 {/* Prix */}
                 <div className="text-center mb-6">
-                  <span 
+                  <span
                     className="text-4xl font-bold"
                     style={{ fontFamily: 'Montserrat, sans-serif', color: offer.color }}
                   >
                     {offer.price.toLocaleString()}
                   </span>
-                  <span 
+                  <span
                     className="text-lg text-gray-600 ml-2"
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   >
@@ -170,15 +174,15 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
                 <ul className="space-y-3 mb-8">
                   {offer.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
-                      <div 
+                      <div
                         className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center mr-3 mt-0.5"
                         style={{ backgroundColor: offer.color }}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                         </svg>
                       </div>
-                      <span 
+                      <span
                         className="text-sm text-gray-700"
                         style={{ fontFamily: 'Montserrat, sans-serif' }}
                       >
@@ -190,12 +194,13 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
 
                 {/* Bouton de sélection */}
                 <button
+                  onClick={() => handleOfferSelect(offer)}
                   className={`w-full py-3 px-6 rounded-[15px] font-bold text-lg transition-all duration-200 ${
-                    selectedOfferId === offer.id 
-                      ? 'ring-2 ring-yellow-400' 
+                    selectedOfferId === offer.id
+                      ? 'ring-2 ring-yellow-400'
                       : 'hover:opacity-90'
                   }`}
-                  style={{ 
+                  style={{
                     backgroundColor: offer.color,
                     color: 'white',
                     fontFamily: 'Montserrat, sans-serif'
@@ -208,14 +213,14 @@ const OffersPage: React.FC<OffersPageProps> = ({ registrationData, onOfferSelect
           ))}
         </div>
 
-        {/* Message d'aide */}
+        {/* Bouton passer */}
         <div className="text-center mt-12">
-          <p 
-            className="text-white opacity-80"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          <button
+            onClick={() => navigate('/login')}
+            className="text-white opacity-80 hover:underline text-sm"
           >
-            Vous pourrez changer d'offre à tout moment depuis votre tableau de bord
-          </p>
+            Je choisirai plus tard
+          </button>
         </div>
       </div>
     </div>

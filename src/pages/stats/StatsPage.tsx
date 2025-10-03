@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import Layout from '../../components/layout/Layout';
+import Sidebar from '../../components/layout/Sidebar';
+import Header from '../../components/layout/Header';
+import { CommonPageProps } from '../../types/common';
 import { DailyValidation, ServerStats, DailyStats } from '../../types/stats';
 import { colors } from '../../config/colors';
 
@@ -209,12 +211,15 @@ const ServerDayStats: React.FC<{ serverStats: ServerStats }> = ({ serverStats })
 };
 
 // Composant principal de la page
-interface StatsPageProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
-}
-
-const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
+const StatsPage: React.FC<CommonPageProps> = ({ 
+  userName,
+  userRole,
+  companies,
+  activeCompany,
+  onCompanySwitch,
+  onAddCompany,
+  onLogout
+}) => {
   const [activeTab, setActiveTab] = useState<'daily' | 'history'>('daily');
   
   // États pour la recherche par période
@@ -270,214 +275,225 @@ const StatsPage: React.FC<StatsPageProps> = ({ currentPage, onNavigate }) => {
   };
 
   return (
-    <Layout 
-      userName="Marc" 
-      userRole="Administrateur"
-      currentPage={currentPage}
-      onNavigate={onNavigate}
-    >
-      {/* En-tête avec onglets */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
-        <h1 
-          className="text-xl lg:text-2xl font-bold"
-          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
-        >
-          STATISTIQUES
-        </h1>
-        
-        {/* Onglets */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('daily')}
-            className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
-              activeTab === 'daily' ? 'text-white' : 'text-gray-700'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'daily' ? colors.primary : colors.white,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
-            Points de la journée
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
-              activeTab === 'history' ? 'text-white' : 'text-gray-700'
-            }`}
-            style={{
-              backgroundColor: activeTab === 'history' ? colors.primary : colors.white,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
-            Historique des validations
-          </button>
-        </div>
-      </div>
-
-      {/* En-tête de période */}
-      <PeriodHeader 
-        startDate={currentStartDate} 
-        endDate={currentEndDate} 
-        isSearched={isSearched}
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar avec déconnexion */}
+      <Sidebar onLogout={onLogout} />
+      
+      {/* Header avec données utilisateur */}
+      <Header 
+        userName={userName}
+        userRole={userRole}
+        companies={companies}
+        activeCompany={activeCompany}
+        onCompanySwitch={onCompanySwitch}
+        onAddCompany={onAddCompany}
       />
 
-      {activeTab === 'daily' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Colonne gauche - Points par serveur */}
-          <div>
-            <h2 className="text-lg font-bold mb-4" 
-                style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-              Points de la période
-            </h2>
-            
-            {serverStats.map((server) => (
-              <ServerDayStats key={server.serverId} serverStats={server} />
-            ))}
-            
-            {/* Total général */}
-            <div className="bg-green-50 rounded-lg p-6 border-2 border-green-200">
-              <h3 className="text-lg font-bold mb-4 text-green-800" 
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                TOTAL GÉNÉRAL
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    TOTAL MOMO :
-                  </span>
-                  <span className="font-bold text-green-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {totalMomo} FCFA
-                  </span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    TOTAL ESPÈCES :
-                  </span>
-                  <span className="font-bold text-green-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {totalEspeces} FCFA
-                  </span>
-                </div>
-                
-                <div className="flex justify-between pt-2 border-t border-green-300">
-                  <span className="text-xl font-bold text-green-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    GRAND TOTAL :
-                  </span>
-                  <span className="text-xl font-bold text-green-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {grandTotal} FCFA
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Colonne droite - Recherche et filtres */}
-          <div>
-            <h2 className="text-lg font-bold mb-4" 
-                style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-              Recherche par période
-            </h2>
-            
-            <div className="bg-white rounded-lg p-6 mb-4">
-              <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Sélectionner une période
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" 
-                         style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Date de début
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2" 
-                         style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Date de fin
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
-                    className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSearch}
-                    className="flex-1 h-[48px] rounded-[10px] text-white font-bold text-lg"
-                    style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
-                  >
-                    RECHERCHER
-                  </button>
-                  
-                  <button
-                    onClick={resetToToday}
-                    className="h-[48px] px-4 rounded-[10px] border border-gray-300 text-gray-700 font-semibold"
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  >
-                    Aujourd'hui
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Statistiques rapides */}
-            <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Statistiques de la période
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {mockValidations.length}
-                  </div>
-                  <div className="text-sm text-blue-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Commandes
-                  </div>
-                </div>
-                
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {serverStats.length}
-                  </div>
-                  <div className="text-sm text-purple-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Serveurs actifs
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Onglet Historique des validations */
-        <div>
-          <h2 className="text-lg font-bold mb-6" 
-              style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-            Historique des validations
-          </h2>
+      {/* Contenu principal */}
+      <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
+        {/* En-tête avec onglets */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
+          <h1 
+            className="text-xl lg:text-2xl font-bold"
+            style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
+          >
+            STATISTIQUES
+          </h1>
           
-          <div className="space-y-4">
-            {mockValidations.map((validation) => (
-              <ValidationCard key={validation.id} validation={validation} />
-            ))}
+          {/* Onglets */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('daily')}
+              className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
+                activeTab === 'daily' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{
+                backgroundColor: activeTab === 'daily' ? colors.primary : colors.white,
+                fontFamily: 'Montserrat, sans-serif'
+              }}
+            >
+              Points de la journée
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
+                activeTab === 'history' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{
+                backgroundColor: activeTab === 'history' ? colors.primary : colors.white,
+                fontFamily: 'Montserrat, sans-serif'
+              }}
+            >
+              Historique des validations
+            </button>
           </div>
         </div>
-      )}
-    </Layout>
+
+        {/* En-tête de période */}
+        <PeriodHeader 
+          startDate={currentStartDate} 
+          endDate={currentEndDate} 
+          isSearched={isSearched}
+        />
+
+        {activeTab === 'daily' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Colonne gauche - Points par serveur */}
+            <div>
+              <h2 className="text-lg font-bold mb-4" 
+                  style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+                Points de la période
+              </h2>
+              
+              {serverStats.map((server) => (
+                <ServerDayStats key={server.serverId} serverStats={server} />
+              ))}
+              
+              {/* Total général */}
+              <div className="bg-green-50 rounded-lg p-6 border-2 border-green-200">
+                <h3 className="text-lg font-bold mb-4 text-green-800" 
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  TOTAL GÉNÉRAL
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      TOTAL MOMO :
+                    </span>
+                    <span className="font-bold text-green-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {totalMomo} FCFA
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      TOTAL ESPÈCES :
+                    </span>
+                    <span className="font-bold text-green-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {totalEspeces} FCFA
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between pt-2 border-t border-green-300">
+                    <span className="text-xl font-bold text-green-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      GRAND TOTAL :
+                    </span>
+                    <span className="text-xl font-bold text-green-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {grandTotal} FCFA
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Colonne droite - Recherche et filtres */}
+            <div>
+              <h2 className="text-lg font-bold mb-4" 
+                  style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+                Recherche par période
+              </h2>
+              
+              <div className="bg-white rounded-lg p-6 mb-4">
+                <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Sélectionner une période
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" 
+                           style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Date de début
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2" 
+                           style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Date de fin
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate}
+                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 outline-none"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSearch}
+                      className="flex-1 h-[48px] rounded-[10px] text-white font-bold text-lg"
+                      style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
+                    >
+                      RECHERCHER
+                    </button>
+                    
+                    <button
+                      onClick={resetToToday}
+                      className="h-[48px] px-4 rounded-[10px] border border-gray-300 text-gray-700 font-semibold"
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
+                      Aujourd'hui
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Statistiques rapides */}
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="font-semibold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Statistiques de la période
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {mockValidations.length}
+                    </div>
+                    <div className="text-sm text-blue-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Commandes
+                    </div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {serverStats.length}
+                    </div>
+                    <div className="text-sm text-purple-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Serveurs actifs
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Onglet Historique des validations */
+          <div>
+            <h2 className="text-lg font-bold mb-6" 
+                style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+              Historique des validations
+            </h2>
+            
+            <div className="space-y-4">
+              {mockValidations.map((validation) => (
+                <ValidationCard key={validation.id} validation={validation} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

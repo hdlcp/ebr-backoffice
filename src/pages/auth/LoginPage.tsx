@@ -1,5 +1,6 @@
 // src/pages/auth/LoginPage.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 import { LoginResponse } from '../../types/auth';
 
@@ -22,6 +23,7 @@ const colors = {
 };
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -66,6 +68,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
         
         // Appel de la fonction onLogin avec les données de connexion
         onLogin(response.data);
+        
+        // Naviguer vers le dashboard après connexion réussie
+        navigate('/dashboard');
       } else if (response.error) {
         // Gérer les erreurs retournées par l'API
         // response.error contient déjà le message 'detail' de l'API
@@ -225,7 +230,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegistration }
                   Vous n'avez pas de compte ?{' '}
                   <button
                     type="button"
-                    onClick={onSwitchToRegistration}
+                    onClick={() => navigate('/register')}
                     className="font-semibold hover:underline"
                     style={{ color: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
                   >

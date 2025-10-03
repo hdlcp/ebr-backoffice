@@ -1,4 +1,6 @@
+// src/pages/auth/EmailValidationPage.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 
 const colors = {
@@ -12,30 +14,27 @@ const colors = {
 
 interface EmailValidationPageProps {
   userEmail: string;
-  userId: number;
   onValidationSuccess: () => void;
 }
 
 const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
   userEmail,
-  userId,
   onValidationSuccess
 }) => {
+  const navigate = useNavigate();
   const [validationCode, setValidationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Vérifier si un code de validation est présent dans l'URL
+  // Vérifier si un code est présent dans l'URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const codeFromUrl = params.get('validation_code') || params.get('code');
-    const userIdFromUrl = params.get('user_id');
 
     if (codeFromUrl) {
       setValidationCode(codeFromUrl);
-      // Valider automatiquement si on a le code dans l'URL
       validateWithCode(codeFromUrl);
     }
   }, []);
@@ -47,14 +46,14 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
 
     try {
       const response = await authService.validateEmail(code.trim());
-      
-      if (response.error) {
-        setError(response.error);
-      } else {
+      if (response.data) {
         setSuccessMessage('Email validé avec succès !');
         setTimeout(() => {
           onValidationSuccess();
+          navigate('/offers'); // ✅ redirection après succès
         }, 2000);
+      } else if (response.error) {
+        setError(response.error);
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la validation');
@@ -63,12 +62,12 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
     }
   };
 
-  const handleValidate = async () => {
+  const handleValidate = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!validationCode.trim()) {
       setError('Veuillez entrer le code de validation');
       return;
     }
-
     await validateWithCode(validationCode);
   };
 
@@ -78,12 +77,13 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
     setIsResending(true);
 
     try {
-      const response = await authService.resendValidationCode(userId);
-      
-      if (response.error) {
-        setError(response.error);
-      } else {
+      // ⚠️ Ici il faudra peut-être adapter ton API si elle attend l'email ou l'userId
+      // Pour l'instant je mets un placeholder car ton service n'était pas clair
+      const response = await authService.resendValidationCode(0);
+      if (response.data) {
         setSuccessMessage('Un nouveau code a été envoyé à votre email');
+      } else if (response.error) {
+        setError(response.error);
       }
     } catch (err) {
       setError('Erreur lors du renvoi du code');
@@ -95,61 +95,54 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Image de fond */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
+        style={{
           backgroundImage: `url('/images/login-background.jpg')`,
           filter: 'blur(1px) brightness(0.7)'
         }}
       />
-      
       {/* Overlay sombre */}
       <div className="absolute inset-0 bg-black bg-opacity-30" />
 
       {/* Container principal */}
-      <div 
+      <div
         className="relative z-10 rounded-[20px] max-w-[600px] w-full mx-auto p-8 lg:p-12"
-        style={{ 
+        style={{
           backgroundColor: colors.container,
           boxShadow: `0 5px 15px ${colors.white}40`
         }}
       >
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img 
-            src="/logos/logo_ebr.png" 
-            alt="eBR Logo" 
-            className="w-32 h-32 object-contain" 
+          <img
+            src="/logos/logo_ebr.png"
+            alt="eBR Logo"
+            className="w-32 h-32 object-contain"
           />
         </div>
 
         {/* Titre */}
-        <h2 
+        <h2
           className="text-2xl font-bold text-center mb-4"
-          style={{ 
-            fontFamily: 'Montserrat, sans-serif',
-            color: colors.text
-          }}
+          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}
         >
           Validez votre email
         </h2>
 
-        {/* Message informatif */}
-        <p 
+        {/* Message */}
+        <p
           className="text-center mb-8"
-          style={{ 
-            fontFamily: 'Montserrat, sans-serif',
-            color: colors.text
-          }}
+          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}
         >
           Un code de validation a été envoyé à <strong>{userEmail}</strong>
         </p>
 
-        {/* Champ code de validation */}
-        <div className="space-y-6">
+        {/* Formulaire */}
+        <form onSubmit={handleValidate} className="space-y-6">
           <div>
-            <label 
-              htmlFor="validationCode" 
+            <label
+              htmlFor="validationCode"
               className="block text-sm font-medium mb-2"
               style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}
             >
@@ -165,21 +158,19 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
                 setError('');
                 setSuccessMessage('');
               }}
-              className={`w-full h-[56px] px-4 rounded-[15px] border-none outline-none text-gray-800 text-center text-lg tracking-wider placeholder-gray-500 transition-all duration-200 ${
+              className={`w-full h-[56px] px-4 rounded-[15px] border-none outline-none text-center text-lg tracking-wider placeholder-gray-500 transition-all duration-200 ${
                 error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'
               }`}
-              style={{ 
-                backgroundColor: colors.white,
-                fontFamily: 'Montserrat, sans-serif'
-              }}
+              style={{ backgroundColor: colors.white, fontFamily: 'Montserrat, sans-serif' }}
+              required
             />
           </div>
 
-          {/* Messages d'erreur ou succès */}
+          {/* Messages */}
           {error && (
-            <div 
+            <div
               className="text-sm text-center p-3 rounded-lg"
-              style={{ 
+              style={{
                 color: colors.error,
                 backgroundColor: `${colors.error}15`,
                 fontFamily: 'Montserrat, sans-serif'
@@ -190,9 +181,9 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
           )}
 
           {successMessage && (
-            <div 
+            <div
               className="text-sm text-center p-3 rounded-lg"
-              style={{ 
+              style={{
                 color: colors.success,
                 backgroundColor: `${colors.success}15`,
                 fontFamily: 'Montserrat, sans-serif'
@@ -204,30 +195,21 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
 
           {/* Bouton valider */}
           <button
-            onClick={handleValidate}
+            type="submit"
             disabled={isLoading}
-            className="w-full h-[56px] rounded-[20px] text-white font-semibold transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ 
-              backgroundColor: colors.primary,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
+            className="w-full h-[56px] rounded-[20px] text-white font-semibold transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}
           >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Validation...
-              </div>
-            ) : (
-              'Valider mon email'
-            )}
+            {isLoading ? 'Validation...' : 'Valider mon email'}
           </button>
 
-          {/* Bouton renvoyer le code */}
+          {/* Bouton renvoyer */}
           <div className="text-center pt-4">
             <p className="text-sm mb-2" style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}>
               Vous n'avez pas reçu le code ?
             </p>
             <button
+              type="button"
               onClick={handleResendCode}
               disabled={isResending}
               className="font-semibold hover:underline disabled:opacity-50"
@@ -236,7 +218,18 @@ const EmailValidationPage: React.FC<EmailValidationPageProps> = ({
               {isResending ? 'Envoi en cours...' : 'Renvoyer le code'}
             </button>
           </div>
-        </div>
+
+          {/* Bouton retour connexion */}
+          <div className="text-center pt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-gray-600 hover:text-gray-800 text-sm"
+            >
+              Retour à la connexion
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

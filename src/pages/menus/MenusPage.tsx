@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import Layout from '../../components/layout/Layout';
+import Sidebar from '../../components/layout/Sidebar';
+import Header from '../../components/layout/Header';
+import { CommonPageProps } from '../../types/common';
 import { Menu, MenuCategory } from '../../types/menu';
 import { colors } from '../../config/colors';
 
@@ -339,12 +341,15 @@ const PackForm: React.FC<{
 };
 
 // Composant principal de la page
-interface MenusPageProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
-}
-
-const MenusPage: React.FC<MenusPageProps> = ({ currentPage, onNavigate }) => {
+const MenusPage: React.FC<CommonPageProps> = ({ 
+  userName,
+  userRole,
+  companies,
+  activeCompany,
+  onCompanySwitch,
+  onAddCompany,
+  onLogout
+}) => {
   const [activeTab, setActiveTab] = useState<'tous' | 'boissons' | 'repas'>('tous');
   const [showMenuForm, setShowMenuForm] = useState(false);
   const [showPackForm, setShowPackForm] = useState(false);
@@ -383,72 +388,106 @@ const MenusPage: React.FC<MenusPageProps> = ({ currentPage, onNavigate }) => {
 
   if (showMenuForm) {
     return (
-      <Layout userName="Marc" userRole="Administrateur" currentPage={currentPage} onNavigate={onNavigate}>
-        <MenuForm onCancel={() => setShowMenuForm(false)} onSubmit={handleAddMenu} />
-      </Layout>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar onLogout={onLogout} />
+        <Header 
+          userName={userName}
+          userRole={userRole}
+          companies={companies}
+          activeCompany={activeCompany}
+          onCompanySwitch={onCompanySwitch}
+          onAddCompany={onAddCompany}
+        />
+        <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
+          <MenuForm onCancel={() => setShowMenuForm(false)} onSubmit={handleAddMenu} />
+        </div>
+      </div>
     );
   }
 
   if (showPackForm) {
     return (
-      <Layout userName="Marc" userRole="Administrateur" currentPage={currentPage} onNavigate={onNavigate}>
-        <PackForm menus={menus} onCancel={() => setShowPackForm(false)} onSubmit={handleCreatePack} />
-      </Layout>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar onLogout={onLogout} />
+        <Header 
+          userName={userName}
+          userRole={userRole}
+          companies={companies}
+          activeCompany={activeCompany}
+          onCompanySwitch={onCompanySwitch}
+          onAddCompany={onAddCompany}
+        />
+        <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
+          <PackForm menus={menus} onCancel={() => setShowPackForm(false)} onSubmit={handleCreatePack} />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Layout userName="Marc" userRole="Administrateur" currentPage={currentPage} onNavigate={onNavigate}>
-      {/* En-tête avec boutons */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
-        <h1 className="text-2xl font-bold"
-            style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-          GESTION DES MENUS
-        </h1>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button onClick={() => setShowPackForm(true)}
-                  className="px-6 h-[46px] rounded-[20px] font-bold text-sm"
-                  style={{ backgroundColor: colors.container, fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-            CRÉER UN PACK +
-          </button>
-          <button onClick={() => setShowMenuForm(true)}
-                  className="px-6 h-[46px] rounded-[20px] font-bold text-sm"
-                  style={{ backgroundColor: colors.container, fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
-            AJOUTER UN MENU +
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar onLogout={onLogout} />
+      <Header 
+        userName={userName}
+        userRole={userRole}
+        companies={companies}
+        activeCompany={activeCompany}
+        onCompanySwitch={onCompanySwitch}
+        onAddCompany={onAddCompany}
+      />
+      
+      <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
+        {/* En-tête avec boutons */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
+          <h1 className="text-2xl font-bold"
+              style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+            GESTION DES MENUS
+          </h1>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button onClick={() => setShowPackForm(true)}
+                    className="px-6 h-[46px] rounded-[20px] font-bold text-sm"
+                    style={{ backgroundColor: colors.container, fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+              CRÉER UN PACK +
+            </button>
+            <button onClick={() => setShowMenuForm(true)}
+                    className="px-6 h-[46px] rounded-[20px] font-bold text-sm"
+                    style={{ backgroundColor: colors.container, fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
+              AJOUTER UN MENU +
+            </button>
+          </div>
+        </div>
+
+        {/* Onglets de filtrage */}
+        <div className="flex gap-2 mb-6">
+          {[
+            { key: 'tous', label: 'TOUS' },
+            { key: 'boissons', label: 'BOISSONS' },
+            { key: 'repas', label: 'REPAS' }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
+                activeTab === tab.key ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{
+                backgroundColor: activeTab === tab.key ? colors.primary : colors.white,
+                fontFamily: 'Montserrat, sans-serif'
+              }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Liste des menus */}
+        <div className="space-y-4">
+          {filteredMenus.map(menu => (
+            <MenuCard key={menu.id} menu={menu} onEdit={handleEdit} onDelete={handleDelete} />
+          ))}
         </div>
       </div>
-
-      {/* Onglets de filtrage */}
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: 'tous', label: 'TOUS' },
-          { key: 'boissons', label: 'BOISSONS' },
-          { key: 'repas', label: 'REPAS' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`px-6 py-2 rounded-[20px] font-semibold text-sm transition-colors ${
-              activeTab === tab.key ? 'text-white' : 'text-gray-700'
-            }`}
-            style={{
-              backgroundColor: activeTab === tab.key ? colors.primary : colors.white,
-              fontFamily: 'Montserrat, sans-serif'
-            }}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Liste des menus */}
-      <div className="space-y-4">
-        {filteredMenus.map(menu => (
-          <MenuCard key={menu.id} menu={menu} onEdit={handleEdit} onDelete={handleDelete} />
-        ))}
-      </div>
-    </Layout>
+    </div>
   );
 };
 

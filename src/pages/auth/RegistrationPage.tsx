@@ -1,5 +1,6 @@
 // src/pages/auth/RegistrationPage.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RegistrationFormData, RegistrationApiResponse } from '../../types/registration';
 import { authService } from '../../services/api/authService';
 
@@ -21,7 +22,9 @@ interface RegistrationPageProps {
   onSwitchToLogin: () => void;
 }
 
-const RegistrationPage: React.FC<RegistrationPageProps> = ({ onRegistration, onSwitchToLogin }) => {
+const RegistrationPage: React.FC<RegistrationPageProps> = ({ onRegistration }) => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<RegistrationFormData>({
     raison_sociale: '',
     telephone: '',
@@ -78,6 +81,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onRegistration, onS
         setErrors({ general: response.error });
       } else if (response.data) {
         onRegistration(response.data, formData);
+        navigate('/verification-code'); // ✅ redirection après inscription réussie
       }
     } catch (err) {
       setErrors({ general: 'Erreur lors de l\'inscription. Veuillez réessayer.' });
@@ -249,7 +253,10 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onRegistration, onS
               <div className="text-center pt-4">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text }}>
                   Vous avez déjà un compte ?{' '}
-                  <button onClick={onSwitchToLogin} className="font-semibold hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')} // ✅ redirection login
+                    className="font-semibold hover:underline"
                     style={{ color: colors.primary, fontFamily: 'Montserrat, sans-serif' }}>
                     Connectez-vous ici
                   </button>

@@ -1,5 +1,6 @@
 // src/App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/auth';
 import RegistrationPage from './pages/auth/RegistrationPage';
 import EmailValidationPage from './pages/auth/EmailValidationPage';
@@ -11,26 +12,70 @@ import { MenusPage } from './pages/menus';
 import { TablesPage } from './pages/tables';
 import { StatsPage } from './pages/stats';
 import { DashboardPage } from './pages/dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 import { RegistrationFormData, Offer, PaymentInfo, RegistrationApiResponse } from './types/registration';
 import { CreateCompanyData, Company } from './types/company';
 import { LoginResponse, Entreprise } from './types/auth';
+import { authUtils } from './utils/authUtils';
 import './index.css';
 
-type AppState = 'login' | 'registration' | 'email-validation' | 'offers' | 'payment' | 'dashboard' | 'add-company';
-
 function App() {
-  const [appState, setAppState] = useState<AppState>('login');
+  const defaultRegistrationData: RegistrationFormData = {
+    raison_sociale: '',
+    telephone: '',
+    email: 'votre mail',
+    site_web: '',
+    numero_ifu: '',
+    numero_registre_commerce: '',
+    username: '',
+    firstname: '',
+    lastname: '',
+    password: '',
+    confirmPassword: '',
+    country: ''
+  };
+
+  const defaultRegisteredUser: RegistrationApiResponse = {
+    username: '',
+    firstname: '',
+    lastname: '',
+    email: '',
+    role: '',
+    is_active: false,
+    matricule: null,
+    id: 0
+  };
+
   const [currentPage, setCurrentPage] = useState('dashboard');
   
   // États pour l'utilisateur connecté
   const [loggedInUser, setLoggedInUser] = useState<LoginResponse | null>(null);
   const [activeCompany, setActiveCompany] = useState<Entreprise | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // États pour le processus d'inscription
   const [registrationData, setRegistrationData] = useState<RegistrationFormData | null>(null);
   const [registeredUser, setRegisteredUser] = useState<RegistrationApiResponse | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const userData = authUtils.getUserData();
+    if (userData && !authUtils.isTokenExpired()) {
+      setLoggedInUser(userData);
+      setIsAuthenticated(true);
+      
+      // Définir l'entreprise active
+      if (userData.entreprises && userData.entreprises.length > 0) {
+        setActiveCompany(userData.entreprises[0]);
+      }
+    } else {
+      // Token expiré ou invalide, nettoyer
+      authUtils.logout();
+      setIsAuthenticated(false);
+    }
+  }, []);
 
   // Navigation dans le dashboard
   const handleNavigate = (page: string) => {
@@ -40,33 +85,30 @@ function App() {
   // Gestion de la connexion
   const handleLogin = (loginData: LoginResponse) => {
     setLoggedInUser(loginData);
+    setIsAuthenticated(true);
     
     // Définir l'entreprise active (la première entreprise par défaut)
     if (loginData.entreprises && loginData.entreprises.length > 0) {
       setActiveCompany(loginData.entreprises[0]);
     }
-    
-    setAppState('dashboard');
   };
 
-  // Navigation entre login et inscription
-  const handleSwitchToRegistration = () => {
-    setAppState('registration');
-  };
-
-  const handleSwitchToLogin = () => {
-    setAppState('login');
+  // Gestion de la déconnexion
+  const handleLogout = () => {
+    authUtils.logout();
+    setLoggedInUser(null);
+    setActiveCompany(null);
+    setIsAuthenticated(false);
   };
 
   // Gestion du processus d'inscription
   const handleRegistration = (userData: RegistrationApiResponse, formData: RegistrationFormData) => {
     setRegisteredUser(userData);
     setRegistrationData(formData);
-    setAppState('email-validation');
   };
 
   const handleEmailValidationSuccess = () => {
-    setAppState('offers');
+    // La navigation sera gérée par React Router
   };
 
   const handleOfferSelected = (offer: Offer) => {
@@ -82,8 +124,8 @@ function App() {
     });
     
     setShowPaymentModal(false);
-    setAppState('dashboard');
     
+    // Réinitialiser les données d'inscription
     setRegistrationData(null);
     setSelectedOffer(null);
   };
@@ -99,7 +141,7 @@ function App() {
 
   // Gestion des entreprises
   const handleAddCompany = () => {
-    setAppState('add-company');
+    // La navigation sera gérée par React Router
   };
 
   const handleCompanyAdded = (companyData: CreateCompanyData) => {
@@ -118,22 +160,17 @@ function App() {
 
     // Ajouter à la liste des entreprises de l'utilisateur connecté
     if (loggedInUser) {
-      setLoggedInUser({
+      const updatedUser = {
         ...loggedInUser,
         entreprises: [...loggedInUser.entreprises, newCompany]
-      });
+      };
+      setLoggedInUser(updatedUser);
       
       // Mettre à jour le localStorage
-      localStorage.setItem('entreprises', JSON.stringify([...loggedInUser.entreprises, newCompany]));
+      localStorage.setItem('entreprises', JSON.stringify(updatedUser.entreprises));
     }
     
     console.log('Nouvelle entreprise ajoutée:', newCompany);
-    
-    setAppState('dashboard');
-  };
-
-  const handleCancelAddCompany = () => {
-    setAppState('dashboard');
   };
 
   // Convertir les entreprises au format Company pour le Header
@@ -169,14 +206,16 @@ function App() {
     };
   };
 
-  // Fonction pour rendre la page actuelle du dashboard
-  const renderDashboardPage = () => {
-    const userName = loggedInUser ? `${loggedInUser.user.firstname} ${loggedInUser.user.lastname}` : '';
-    const userRole = loggedInUser?.user.role === 'admin' ? 'Administrateur' : loggedInUser?.user.role || '';
+  // Props communes pour les pages protégées
+  const getCommonProps = () => {
+    if (!loggedInUser) return null;
+
+    const userName = `${loggedInUser.user.firstname} ${loggedInUser.user.lastname}`;
+    const userRole = loggedInUser.user.role === 'admin' ? 'Administrateur' : loggedInUser.user.role;
     const companies = getCompaniesForHeader();
     const activeCompanyData = getActiveCompanyForHeader();
 
-    const commonProps = {
+    return {
       currentPage,
       onNavigate: handleNavigate,
       onAddCompany: handleAddCompany,
@@ -185,110 +224,155 @@ function App() {
       companies,
       activeCompany: activeCompanyData,
       onCompanySwitch: (company: Company) => {
-        const entreprise = loggedInUser?.entreprises.find(e => e.id.toString() === company.id);
+        const entreprise = loggedInUser.entreprises.find(e => e.id.toString() === company.id);
         if (entreprise) {
           handleCompanySwitch(entreprise);
         }
-      }
+      },
+      onLogout: handleLogout
     };
-
-    switch (currentPage) {
-      case 'dashboard':
-        return <DashboardPage {...commonProps} />;
-      case 'employees':
-        return <EmployeesPage {...commonProps} />;
-      case 'menus':
-        return <MenusPage {...commonProps} />;
-      case 'tables':
-        return <TablesPage {...commonProps} />;
-      case 'stats':
-        return <StatsPage {...commonProps} />;
-      default:
-        return <DashboardPage {...commonProps} />;
-    }
-  };
-
-  // Rendu principal de l'application
-  const renderCurrentView = () => {
-    switch (appState) {
-      case 'login':
-        return (
-          <LoginPage 
-            onLogin={handleLogin}
-            onSwitchToRegistration={handleSwitchToRegistration}
-          />
-        );
-
-      case 'registration':
-        return (
-          <RegistrationPage 
-            onRegistration={handleRegistration}
-            onSwitchToLogin={handleSwitchToLogin}
-          />
-        );
-
-      case 'email-validation':
-        return registeredUser && registrationData ? (
-          <EmailValidationPage 
-            userEmail={registrationData.email}
-            userId={registeredUser.id}
-            onValidationSuccess={handleEmailValidationSuccess}
-          />
-        ) : (
-          <LoginPage 
-            onLogin={handleLogin}
-            onSwitchToRegistration={handleSwitchToRegistration}
-          />
-        );
-
-      case 'offers':
-        return registrationData && registeredUser ? (
-          <OffersPage 
-            registrationData={registrationData}
-            registeredUser={registeredUser}
-            onOfferSelected={handleOfferSelected}
-          />
-        ) : (
-          <LoginPage 
-            onLogin={handleLogin}
-            onSwitchToRegistration={handleSwitchToRegistration}
-          />
-        );
-
-      case 'add-company':
-        return (
-          <AddCompanyPage 
-            onAddCompany={handleCompanyAdded}
-            onCancel={handleCancelAddCompany}
-          />
-        );
-
-      case 'dashboard':
-        return renderDashboardPage();
-
-      default:
-        return (
-          <LoginPage 
-            onLogin={handleLogin}
-            onSwitchToRegistration={handleSwitchToRegistration}
-          />
-        );
-    }
   };
 
   return (
-    <div className="App">
-      {renderCurrentView()}
-      
-      {/* Modal de paiement */}
-      {showPaymentModal && selectedOffer && (
-        <PaymentModal 
-          selectedOffer={selectedOffer}
-          onPayment={handlePayment}
-          onClose={handleClosePaymentModal}
-        />
-      )}
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          {/* Routes publiques */}
+          <Route 
+            path="/login" 
+            element={
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <LoginPage 
+                  onLogin={handleLogin}
+                  onSwitchToRegistration={() => {}}
+                />
+              )
+            } 
+          />
+          
+          <Route 
+            path="/register" 
+            element={
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <RegistrationPage 
+                  onRegistration={handleRegistration}
+                  onSwitchToLogin={() => {}}
+                />
+              )
+            } 
+          />
+          
+          <Route 
+            path="/verification-code" 
+            element={
+                <EmailValidationPage 
+                  userEmail={registrationData?.email || defaultRegistrationData.email}
+                  onValidationSuccess={handleEmailValidationSuccess}
+                />
+            } 
+          />
+          
+          <Route 
+            path="/offers" 
+            element={
+              <OffersPage 
+                  registrationData={registrationData || defaultRegistrationData} 
+                  registeredUser={registeredUser || defaultRegisteredUser} 
+                  onOfferSelected={handleOfferSelected}
+              />
+            } 
+          />
+
+
+          {/* Routes protégées */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <DashboardPage {...getCommonProps()!} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/employees" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <EmployeesPage {...getCommonProps()!} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/menus" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <MenusPage {...getCommonProps()!} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/tables" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <TablesPage {...getCommonProps()!} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/stats" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <StatsPage {...getCommonProps()!} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/add-company" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <AddCompanyPage 
+                  onAddCompany={handleCompanyAdded}
+                  onCancel={() => {}}
+                />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Redirection par défaut */}
+          <Route 
+            path="/" 
+            element={
+              <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            } 
+          />
+          
+          {/* Route 404 */}
+          <Route 
+            path="*" 
+            element={
+              <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            } 
+          />
+        </Routes>
+
+        {/* Modal de paiement */}
+        {showPaymentModal && selectedOffer && (
+          <PaymentModal 
+            selectedOffer={selectedOffer}
+            onPayment={handlePayment}
+            onClose={handleClosePaymentModal}
+          />
+        )}
+      </div>
+    </Router>
   );
 }
 

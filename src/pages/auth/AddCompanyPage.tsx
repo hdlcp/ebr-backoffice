@@ -1,5 +1,6 @@
+// src/pages/auth/AddCompanyPage.tsx
 import React, { useState } from 'react';
-import { colors } from '../../config/colors';
+import { useNavigate } from 'react-router-dom';
 import { CreateCompanyData } from '../../types/company';
 
 interface AddCompanyPageProps {
@@ -7,10 +8,19 @@ interface AddCompanyPageProps {
   onCancel: () => void;
 }
 
-const AddCompanyPage: React.FC<AddCompanyPageProps> = ({ onAddCompany, onCancel }) => {
-  const [companyName, setCompanyName] = useState('');
+const AddCompanyPage: React.FC<AddCompanyPageProps> = ({ onAddCompany }) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<CreateCompanyData>({
+    name: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,165 +28,82 @@ const AddCompanyPage: React.FC<AddCompanyPageProps> = ({ onAddCompany, onCancel 
     setIsLoading(true);
 
     try {
-      if (!companyName.trim()) {
-        setError('Veuillez entrer le nom de l\'entreprise');
+      if (!formData.name.trim()) {
+        setError("Le nom de l'entreprise est requis");
+        setIsLoading(false);
         return;
       }
 
-      // Simulation d'appel API
+      // Simulation d’appel API ou callback réel
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Ajout nouvelle entreprise:', companyName);
-      onAddCompany({ name: companyName.trim() });
-      
+      onAddCompany(formData);
+
+      // Redirection vers le dashboard
+      navigate('/dashboard');
     } catch (err) {
-      setError('Erreur lors de l\'ajout de l\'entreprise. Veuillez réessayer.');
+      console.error("Erreur lors de l'ajout de l'entreprise:", err);
+      setError("Erreur lors de l'ajout de l'entreprise");
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Image de fond */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
-          backgroundImage: `url('/images/login-background.jpg')`,
-          filter: 'blur(1px) brightness(0.7)'
-        }}
-      />
-      
-      {/* Overlay sombre */}
-      <div className="absolute inset-0 bg-black bg-opacity-30" />
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
 
-      {/* Container principal */}
-      <div 
-        className="relative z-10 flex flex-col lg:flex-row rounded-[20px] overflow-hidden max-w-[800px] w-full mx-auto"
-        style={{ 
-          backgroundColor: colors.container,
-          minHeight: '500px',
-          boxShadow: `0 5px 15px ${colors.white}40`
-        }}
-      >
-        {/* Section Logo - Gauche */}
-        <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
-          <div className="w-[250px] h-[250px] flex items-center justify-center">
-            <img 
-              src="/logos/logo_ebr.png" 
-              alt="eBR Logo" 
-              className="w-full h-full object-contain" 
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          Ajouter une nouvelle entreprise
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nom de l'entreprise */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Nom de l'entreprise *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Ex: Restaurant Le Palmier"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              required
             />
           </div>
-        </div>
 
-        {/* Séparateur vertical */}
-        <div 
-          className="hidden lg:block w-[5px] self-stretch mx-4 my-8"
-          style={{ backgroundColor: colors.white }}
-        />
-        
-        {/* Séparateur horizontal pour mobile */}
-        <div 
-          className="lg:hidden h-[5px] self-stretch mx-8 my-4"
-          style={{ backgroundColor: colors.white }}
-        />
+          {/* Erreur */}
+          {error && (
+            <div className="text-red-500 text-sm text-center p-3 bg-red-50 rounded-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              {error}
+            </div>
+          )}
 
-        {/* Section Formulaire - Droite */}
-        <div className="flex-1 flex flex-col justify-center p-8 lg:p-12">
-          <div className="w-full max-w-[400px] mx-auto">
-            {/* Titre */}
-            <h2 
-              className="text-xl font-bold text-center mb-8"
-              style={{ 
-                fontFamily: 'Montserrat, sans-serif',
-                color: colors.text.primary
-              }}
+          {/* Boutons */}
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
-              Ajouter une nouvelle entreprise
-            </h2>
-
-            {/* Formulaire */}
-            <div className="space-y-6">
-              {/* Champ nom de l'entreprise */}
-              <div>
-                <label 
-                  htmlFor="companyName" 
-                  className="block text-sm font-medium mb-2"
-                  style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
-                >
-                  Nom de l'entreprise
-                </label>
-                <input
-                  type="text"
-                  id="companyName"
-                  placeholder="Entrez le nom de votre nouvelle entreprise"
-                  value={companyName}
-                  onChange={(e) => {
-                    setCompanyName(e.target.value);
-                    if (error) setError('');
-                  }}
-                  className={`w-full h-[48px] px-4 rounded-[15px] border-none outline-none text-gray-800 placeholder-gray-500 transition-all duration-200 ${
-                    error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'
-                  }`}
-                  style={{ 
-                    backgroundColor: colors.white,
-                    fontFamily: 'Montserrat, sans-serif'
-                  }}
-                  required
-                />
-                {error && (
-                  <p className="text-red-500 text-sm mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {error}
-                  </p>
-                )}
-              </div>
-
-              {/* Boutons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="flex-1 h-[48px] rounded-[20px] text-white font-semibold transition-all duration-200 hover:opacity-90 focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ 
-                    backgroundColor: colors.primary,
-                    fontFamily: 'Montserrat, sans-serif'
-                  }}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Ajout...
-                    </div>
-                  ) : (
-                    'Ajouter l\'entreprise'
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="flex-1 h-[48px] rounded-[20px] font-semibold transition-all duration-200 hover:opacity-90"
-                  style={{ 
-                    backgroundColor: colors.white,
-                    color: colors.text.primary,
-                    fontFamily: 'Montserrat, sans-serif'
-                  }}
-                >
-                  Annuler
-                </button>
-              </div>
-            </div>
-
-            {/* Note informative */}
-            <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: `${colors.primary}15` }}>
-              <p className="text-sm text-center" style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}>
-                Vous pourrez basculer entre vos entreprises à tout moment depuis le header.
-              </p>
-            </div>
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              {isLoading ? 'Ajout en cours...' : "Ajouter l'entreprise"}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
