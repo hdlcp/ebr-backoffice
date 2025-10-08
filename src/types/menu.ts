@@ -1,67 +1,63 @@
 // src/types/menu.ts
 
+export type MenuCategory = 'repas' | 'boissons' | 'pack';
+
 export interface Menu {
-  id: string;
-  name: string;
-  price: number;
-  category: 'boissons' | 'repas';
-  image?: string;
-  description?: string;
-  isAvailable: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: number;
+  nom: string;
+  prix: number;
+  categorie: MenuCategory;
+  image: string;
+  description: string;
+  entreprise_id: number;
+  menus: number[]; // Pour les packs
+  status: number; // 1 = actif, -1 = désactivé
 }
 
-export interface Pack {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  menus: Menu[];
-  description?: string;
-  isAvailable: boolean;
-  createdAt: string;
-  updatedAt: string;
+export interface CreateMenuRequest {
+  nom: string;
+  prix: number;
+  categorie: 'repas' | 'boissons';
+  image: File | null;
+  entreprise_id: number;
+  description: string;
+  menus: number[];
 }
 
-export interface CreateMenuData {
-  name: string;
-  price: number;
-  category: 'boissons' | 'repas';
-  image?: File;
+export interface CreatePackRequest {
+  nom: string;
+  prix: number;
+  categorie: 'pack';
+  image: File | null;
+  entreprise_id: number;
+  description: string;
+  menus: number[]; // IDs des menus du pack
+}
+
+export interface UpdateMenuRequest {
+  nom?: string;
+  prix?: number;
+  categorie?: MenuCategory;
+  image?: File | null;
   description?: string;
 }
 
-export interface CreatePackData {
-  name: string;
-  price: number;
-  category: string;
-  menuIds: string[];
-  description?: string;
+export interface GetMenusResponse {
+  detail: Menu[];
 }
 
 export interface MenuFormData {
-  name: string;
-  price: string;
-  category: 'boissons' | 'repas' | '';
-  image?: File;
+  nom: string;
+  prix: string;
+  categorie: 'repas' | 'boissons' | '';
+  image: File | null;
+  description: string;
 }
 
 export interface PackFormData {
-  name: string;
-  price: string;
-  category: string;
+  nom: string;
+  prix: string;
+  categorie: string;
   selectedMenus: Menu[];
-}
-
-export enum MenuCategory {
-  BOISSONS = 'boissons',
-  REPAS = 'repas'
-}
-
-export enum PackCategory {
-  LUNCH = 'lunch',
-  DINNER = 'dinner',
-  BREAKFAST = 'breakfast',
-  SPECIAL = 'special'
+  description: string;
 }
