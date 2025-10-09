@@ -1,31 +1,29 @@
 // src/types/table.ts
 
 export interface Table {
-  id: string;
-  name: string;
-  order: number;
-  isActive: boolean;
-  isOccupied?: boolean;
-  capacity?: number;
-  createdAt: string;
-  updatedAt: string;
+  id: number;
+  nom: string;
+  ordre: number;
+  entreprise_id?: number;
+  est_occupee: boolean;
 }
 
-export interface CreateTableData {
-  name: string;
-  order: number;
-  capacity?: number;
+export interface CreateTableRequest {
+  nom: string;
+  ordre: number;
+  entreprise_id: number;
+}
+
+export interface UpdateTableRequest {
+  nom?: string;
+  ordre?: number;
+}
+
+export interface GetTablesResponse {
+  detail: Table[];
 }
 
 export interface TableFormData {
-  name: string;
-  order: string;
-  capacity?: string;
-}
-
-export enum TableStatus {
-  AVAILABLE = 'available',
-  OCCUPIED = 'occupied',
-  RESERVED = 'reserved',
-  INACTIVE = 'inactive'
+  nom: string;
+  ordre: string;
 }

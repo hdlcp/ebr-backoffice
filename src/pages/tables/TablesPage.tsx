@@ -1,250 +1,14 @@
-import React, { useState } from 'react';
+// src/pages/tables/TablesPage.tsx
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/layout/Sidebar';
 import Header from '../../components/layout/Header';
+import TableForm from './components/TableForm';
+import TableList from './components/TableList';
 import { CommonPageProps } from '../../types/common';
-import { Table } from '../../types/table';
+import { Table, TableFormData } from '../../types/table';
+import { tableService } from '../../services/api/tableService';
 import { colors } from '../../config/colors';
 
-// Données d'exemple pour les tables
-const initialTables: Table[] = [
-  {
-    id: '1',
-    name: 'Table 1',
-    order: 1,
-    isActive: true,
-    isOccupied: false,
-    capacity: 4,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'Table 2',
-    order: 2,
-    isActive: true,
-    isOccupied: false,
-    capacity: 6,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  },
-  {
-    id: '3',
-    name: 'Table 3',
-    order: 3,
-    isActive: true,
-    isOccupied: true,
-    capacity: 2,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  },
-  {
-    id: '4',
-    name: 'Table 4',
-    order: 4,
-    isActive: true,
-    isOccupied: false,
-    capacity: 8,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01'
-  }
-];
-
-// Composant pour une carte de table
-const TableCard: React.FC<{
-  table: Table;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-}> = ({ table, onEdit, onDelete }) => {
-  return (
-    <div 
-      className="w-full max-w-[994px] h-[79px] rounded-[10px] flex items-center justify-between px-6 mx-auto"
-      style={{ backgroundColor: colors.white }}
-    >
-      {/* Informations de la table */}
-      <div className="flex flex-col">
-        <span 
-          className="font-semibold text-base"
-          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
-        >
-          {table.name}
-        </span>
-        <span 
-          className="text-sm"
-          style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}
-        >
-          Ordre : {table.order}
-        </span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-4">
-        {/* Icône de modification */}
-        <button
-          onClick={() => onEdit(table.id)}
-          className="w-[30px] h-[30px] flex items-center justify-center text-orange-500 hover:text-orange-600 transition-colors"
-          title="Modifier"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-          </svg>
-        </button>
-
-        {/* Icône de suppression */}
-        <button
-          onClick={() => onDelete(table.id)}
-          className="w-[30px] h-[30px] flex items-center justify-center text-red-500 hover:text-red-600 transition-colors"
-          title="Supprimer"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Composant formulaire d'ajout de table
-const TableForm: React.FC<{
-  onCancel: () => void;
-  onSubmit: (table: Omit<Table, 'id' | 'isActive' | 'isOccupied' | 'createdAt' | 'updatedAt'>) => void;
-}> = ({ onCancel, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    order: '',
-    capacity: ''
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Le nom de la table est requis';
-    }
-
-    if (!formData.order) {
-      newErrors.order = 'L\'ordre de la table est requis';
-    } else if (parseInt(formData.order) <= 0) {
-      newErrors.order = 'L\'ordre doit être supérieur à 0';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit({
-        name: formData.name.trim(),
-        order: parseInt(formData.order),
-        capacity: formData.capacity ? parseInt(formData.capacity) : undefined
-      });
-      // Reset form
-      setFormData({ name: '', order: '', capacity: '' });
-      setErrors({});
-    }
-  };
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  return (
-    <div className="w-full max-w-[994px] mx-auto mt-4 lg:mt-8">
-      <h2 
-        className="text-xl lg:text-2xl font-bold text-center mb-6 lg:mb-8"
-        style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}
-      >
-        AJOUT D'UNE TABLE
-      </h2>
-
-      <div className="space-y-4">
-        {/* Nom de la table */}
-        <div>
-          <input
-            type="text"
-            placeholder="Entrez le nom de la table"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            className={`w-full h-[56px] px-4 rounded-[10px] border-none outline-none text-gray-800 placeholder-gray-500 transition-all duration-200 ${
-              errors.name ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'
-            }`}
-            style={{ 
-              backgroundColor: colors.white,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {errors.name}
-            </p>
-          )}
-        </div>
-
-        {/* Ordre de la table */}
-        <div>
-          <select
-            value={formData.order}
-            onChange={(e) => handleInputChange('order', e.target.value)}
-            className={`w-full h-[56px] px-4 rounded-[10px] border-none outline-none text-gray-800 transition-all duration-200 ${
-              errors.order ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'
-            }`}
-            style={{ 
-              backgroundColor: colors.white,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
-            <option value="" disabled>Choisissez l'ordre de la table</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-              <option key={num} value={num}>Ordre {num}</option>
-            ))}
-          </select>
-          {errors.order && (
-            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {errors.order}
-            </p>
-          )}
-        </div>
-
-        {/* Boutons */}
-        <div className="flex flex-col lg:flex-row gap-4 pt-4">
-          {/* Bouton Ajouter */}
-          <button
-            onClick={handleSubmit}
-            className="w-full lg:flex-1 h-[56px] rounded-[10px] text-white font-bold text-lg hover:opacity-90 transition-opacity"
-            style={{
-              backgroundColor: colors.primary,
-              fontFamily: 'Montserrat, sans-serif'
-            }}
-          >
-            AJOUTER
-          </button>
-          
-          {/* Bouton Annuler */}
-          <button
-            onClick={onCancel}
-            className="w-full lg:w-auto lg:px-8 h-[56px] rounded-[10px] font-bold text-lg hover:opacity-90 transition-opacity"
-            style={{
-              backgroundColor: colors.danger,
-              fontFamily: 'Montserrat, sans-serif',
-              color: colors.text.white
-            }}
-          >
-            ANNULER
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Composant principal de la page
 const TablesPage: React.FC<CommonPageProps> = ({ 
   userName,
   userRole,
@@ -256,37 +20,116 @@ const TablesPage: React.FC<CommonPageProps> = ({
 }) => {
   const [tablesActive, setTablesActive] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [tables, setTables] = useState<Table[]>(initialTables);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleAddTable = (newTable: Omit<Table, 'id' | 'isActive' | 'isOccupied' | 'createdAt' | 'updatedAt'>) => {
-    const table: Table = {
-      ...newTable,
-      id: Date.now().toString(),
-      isActive: true,
-      isOccupied: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setTables([...tables, table]);
-    setShowAddForm(false);
+  // Charger les tables au montage et quand l'entreprise change
+  useEffect(() => {
+    loadTables();
+  }, [activeCompany]);
+
+  const loadTables = async () => {
+    setIsLoadingList(true);
+    setError('');
+    
+    try {
+      const entrepriseId = parseInt(activeCompany.id);
+      const response = await tableService.getTables(entrepriseId);
+
+      if (response.data) {
+        setTables(response.data);
+      } else if (response.error) {
+        setError(response.error);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des tables:', err);
+      setError('Erreur lors du chargement des tables');
+    } finally {
+      setIsLoadingList(false);
+    }
   };
 
-  const handleEdit = (id: string) => {
-    console.log('Modifier table:', id);
+  const handleAddTable = async (formData: TableFormData) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await tableService.createTable({
+        nom: formData.nom,
+        ordre: parseInt(formData.ordre),
+        entreprise_id: parseInt(activeCompany.id)
+      });
+
+      if (response.data) {
+        setTables([...tables, response.data]);
+        setShowAddForm(false);
+        alert(`Table "${response.data.nom}" ajoutée avec succès!`);
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      console.error('Erreur lors de l\'ajout:', err);
+      alert('Erreur lors de l\'ajout de la table');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette table ?')) {
-      setTables(tables.filter(table => table.id !== id));
+  const handleEdit = (tableId: number) => {
+    console.log('Modifier table:', tableId);
+    alert('Fonctionnalité de modification en cours de développement');
+  };
+
+  const handleDelete = async (tableId: number) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette table ?')) {
+      return;
+    }
+
+    try {
+      const response = await tableService.deleteTable(tableId);
+
+      if (response.statusCode === 200 || response.data) {
+        setTables(tables.filter(t => t.id !== tableId));
+        alert('Table supprimée avec succès');
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la suppression:', err);
+      alert('Erreur lors de la suppression de la table');
+    }
+  };
+
+  const handleToggleTablesStatus = async () => {
+    try {
+      const promises = tables.map(table => 
+        tablesActive 
+          ? tableService.deactivateTable(table.id)
+          : tableService.activateTable(table.id)
+      );
+
+      await Promise.all(promises);
+      setTablesActive(!tablesActive);
+      
+      alert(tablesActive 
+        ? 'Toutes les tables ont été désactivées' 
+        : 'Toutes les tables ont été activées'
+      );
+      
+      // Recharger les tables
+      loadTables();
+    } catch (err) {
+      console.error('Erreur lors du changement de statut:', err);
+      alert('Erreur lors du changement de statut des tables');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar avec déconnexion */}
       <Sidebar onLogout={onLogout} />
       
-      {/* Header avec données utilisateur */}
       <Header 
         userName={userName}
         userRole={userRole}
@@ -296,7 +139,6 @@ const TablesPage: React.FC<CommonPageProps> = ({
         onAddCompany={onAddCompany}
       />
 
-      {/* Contenu principal */}
       <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
         {!showAddForm ? (
           <>
@@ -314,7 +156,9 @@ const TablesPage: React.FC<CommonPageProps> = ({
                 {/* Boutons Activer/Désactiver */}
                 <div className="flex rounded-[20px] overflow-hidden">
                   <button
-                    onClick={() => setTablesActive(true)}
+                    onClick={() => {
+                      if (!tablesActive) handleToggleTablesStatus();
+                    }}
                     className={`px-4 py-2 font-semibold text-sm transition-colors ${
                       tablesActive ? 'text-white' : 'text-gray-700'
                     }`}
@@ -326,7 +170,9 @@ const TablesPage: React.FC<CommonPageProps> = ({
                     ACTIVER
                   </button>
                   <button
-                    onClick={() => setTablesActive(false)}
+                    onClick={() => {
+                      if (tablesActive) handleToggleTablesStatus();
+                    }}
                     className={`px-4 py-2 font-semibold text-sm transition-colors ${
                       !tablesActive ? 'text-white' : 'text-gray-700'
                     }`}
@@ -343,7 +189,7 @@ const TablesPage: React.FC<CommonPageProps> = ({
                 {tablesActive && (
                   <button
                     onClick={() => setShowAddForm(true)}
-                    className="w-full sm:w-[198px] h-[46px] rounded-[20px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                    className="w-full sm:w-auto px-6 h-[46px] rounded-[20px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                     style={{
                       backgroundColor: colors.container,
                       fontFamily: 'Montserrat, sans-serif',
@@ -356,19 +202,25 @@ const TablesPage: React.FC<CommonPageProps> = ({
               </div>
             </div>
 
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                {error}
+              </div>
+            )}
+
             {/* Contenu conditionnel */}
             {tablesActive ? (
-              /* Liste des tables */
-              <div className="space-y-4">
-                {tables.map((table) => (
-                  <TableCard
-                    key={table.id}
-                    table={table}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
+              isLoadingList ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                </div>
+              ) : (
+                <TableList 
+                  tables={tables}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )
             ) : (
               /* Message quand les tables sont désactivées */
               <div className="flex items-center justify-center h-64">
@@ -393,6 +245,7 @@ const TablesPage: React.FC<CommonPageProps> = ({
           <TableForm 
             onCancel={() => setShowAddForm(false)}
             onSubmit={handleAddTable}
+            isLoading={isLoading}
           />
         )}
       </div>
