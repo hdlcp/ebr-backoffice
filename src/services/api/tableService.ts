@@ -22,7 +22,7 @@ export const tableService = {
   async getTables(entrepriseId: number, skip: number = 0, limit: number = 100): Promise<ApiResponse<Table[]>> {
     const token = localStorage.getItem('access_token');
     
-    const response = await httpClient.get<{ detail: Table[] }>(
+    const response = await httpClient.get<Table[]>(
       `tables/${entrepriseId}?skip=${skip}&limit=${limit}`,
       {
         headers: {
@@ -31,9 +31,10 @@ export const tableService = {
       }
     );
 
-    if (response.data?.detail) {
+    // La réponse est directement un tableau, pas un objet avec detail
+    if (response.data) {
       return {
-        data: response.data.detail,
+        data: response.data,
         statusCode: response.statusCode
       };
     }
@@ -58,12 +59,12 @@ export const tableService = {
   },
 
   /**
-   * Activer une table
+   * Activer plusieurs tables en une seule requête
    */
-  async activateTable(tableId: number): Promise<ApiResponse<any>> {
+  async activateTables(tableIds: number[]): Promise<ApiResponse<any>> {
     const token = localStorage.getItem('access_token');
     
-    return httpClient.post<any>(`tablesactiver/${tableId}`, {}, {
+    return httpClient.post<any>('tables/activer', tableIds, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -71,12 +72,12 @@ export const tableService = {
   },
 
   /**
-   * Désactiver une table
+   * Désactiver plusieurs tables en une seule requête
    */
-  async deactivateTable(tableId: number): Promise<ApiResponse<any>> {
+  async deactivateTables(tableIds: number[]): Promise<ApiResponse<any>> {
     const token = localStorage.getItem('access_token');
     
-    return httpClient.post<any>(`tablesdesactiver/${tableId}`, {}, {
+    return httpClient.post<any>('tables/desactiver', tableIds, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

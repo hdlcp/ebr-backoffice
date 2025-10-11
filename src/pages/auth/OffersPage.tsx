@@ -1,7 +1,8 @@
 // src/pages/auth/OffersPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RegistrationFormData, RegistrationApiResponse, Offer } from '../../types/registration';
+import { offreService, OffreApi } from '../../services/api/offreService';
 
 const colors = {
   primary: '#007A3F',
@@ -10,55 +11,12 @@ const colors = {
   text: '#333333'
 };
 
-// Liste des offres
-const offers: Offer[] = [
-  {
-    id: 'basic',
-    name: 'Plan Basique',
-    price: 15000,
-    duration: '/ mois',
-    features: [
-      'Gestion de 2 serveurs maximum',
-      'Jusqu’à 10 tables',
-      'Gestion des menus de base',
-      'Support par email',
-      '30 jours d’essai gratuit'
-    ],
-    color: '#3B82F6'
-  },
-  {
-    id: 'professional',
-    name: 'Plan Professionnel',
-    price: 35000,
-    duration: '/ mois',
-    features: [
-      'Gestion de 10 serveurs maximum',
-      'Jusqu’à 50 tables',
-      'Gestion complète des menus et packs',
-      'Statistiques avancées',
-      'Support prioritaire 24/7',
-      'Formation gratuite'
-    ],
-    color: colors.primary,
-    isPopular: true
-  },
-  {
-    id: 'enterprise',
-    name: 'Plan Entreprise',
-    price: 75000,
-    duration: '/ mois',
-    features: [
-      'Serveurs illimités',
-      'Tables illimitées',
-      'Fonctionnalités complètes',
-      'API personnalisée',
-      'Support dédié',
-      'Formation et consultation',
-      'Sauvegarde cloud sécurisée'
-    ],
-    color: '#8B5CF6'
-  }
-];
+// Mapping des couleurs par code d'offre
+const offerColors: { [key: string]: string } = {
+  'B1': '#3B82F6',
+  'S1': '#007A3F',
+  'P1': '#8B5CF6'
+};
 
 interface OffersPageProps {
   registrationData: RegistrationFormData;
@@ -73,11 +31,89 @@ const OffersPage: React.FC<OffersPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadOffers();
+  }, []);
+
+  const loadOffers = async () => {
+    setLoading(true);
+    setError(null);
+
+    const response = await offreService.getOffres();
+
+    if (response.error || !response.data) {
+      setError(response.error || 'Impossible de charger les offres');
+      setLoading(false);
+      return;
+    }
+
+    // Transformer les données de l'API en format Offer
+    const transformedOffers: Offer[] = response.data.map((offreApi: OffreApi, index: number) => ({
+      id: offreApi.code,
+      name: offreApi.nom,
+      price: offreApi.prix,
+      duration: '/ mois',
+      features: offreApi.fonctionnalites.map(f => f.nom),
+      color: offerColors[offreApi.code] || colors.primary,
+      isPopular: offreApi.code === 'S1' // Marquer Standard comme populaire
+    }));
+
+    setOffers(transformedOffers);
+    setLoading(false);
+  };
 
   const handleOfferSelect = (offer: Offer) => {
     setSelectedOfferId(offer.id);
-    onOfferSelected(offer); // App.tsx va gérer la suite (paiement/modal)
+    onOfferSelected(offer);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/images/login-background.jpg')`,
+            filter: 'blur(1px) brightness(0.7)'
+          }}
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30" />
+        <div className="relative z-10 text-white text-xl">
+          Chargement des offres...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/images/login-background.jpg')`,
+            filter: 'blur(1px) brightness(0.7)'
+          }}
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30" />
+        <div className="relative z-10 text-center">
+          <div className="bg-white rounded-lg p-8 max-w-md">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={loadOffers}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -114,7 +150,7 @@ const OffersPage: React.FC<OffersPageProps> = ({
             className="text-xl text-white opacity-90"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Choisissez l’offre qui convient le mieux à votre entreprise
+            Choisissez l'offre qui convient le mieux à votre entreprise
           </p>
         </div>
 

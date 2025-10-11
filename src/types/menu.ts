@@ -1,12 +1,12 @@
 // src/types/menu.ts
 
-export type MenuCategory = 'repas' | 'boissons' | 'pack';
+export type MenuCategory = string; // Dynamique maintenant
 
 export interface Menu {
   id: number;
   nom: string;
   prix: number;
-  categorie: MenuCategory;
+  categorie: string;
   image: string;
   description: string;
   entreprise_id: number;
@@ -17,11 +17,10 @@ export interface Menu {
 export interface CreateMenuRequest {
   nom: string;
   prix: number;
-  categorie: 'repas' | 'boissons';
+  categorie: string; // Dynamique
   image: File | null;
   entreprise_id: number;
   description: string;
-  menus: number[];
 }
 
 export interface CreatePackRequest {
@@ -37,9 +36,10 @@ export interface CreatePackRequest {
 export interface UpdateMenuRequest {
   nom?: string;
   prix?: number;
-  categorie?: MenuCategory;
+  categorie?: string;
   image?: File | null;
   description?: string;
+  menus?: number[]; // Pour les packs
 }
 
 export interface GetMenusResponse {
@@ -49,7 +49,7 @@ export interface GetMenusResponse {
 export interface MenuFormData {
   nom: string;
   prix: string;
-  categorie: 'repas' | 'boissons' | '';
+  categorie: string;
   image: File | null;
   description: string;
 }

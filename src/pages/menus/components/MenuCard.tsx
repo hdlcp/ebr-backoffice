@@ -8,11 +8,34 @@ interface MenuCardProps {
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleStatus: (id: number, currentStatus: number) => void;
+  onViewPackDetails?: (id: number) => void;
 }
 
-const MenuCard: React.FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggleStatus }) => {
+const MenuCard: React.FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggleStatus, onViewPackDetails }) => {
   const isActive = menu.status === 1;
-  const imageUrl = menu.image ? `http://146.190.129.166:8000/${menu.image}` : '/images/default-menu.png';
+  const isPack = menu.categorie === 'pack';
+  const imageUrl = menu.image ? `http://146.190.129.166:8000/images/${menu.image}` : '/logo512.png';
+
+  // Fonction pour formater le nom de la catégorie
+  const formatCategory = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
+  // Fonction pour obtenir la couleur du badge selon la catégorie
+  const getCategoryColor = (category: string) => {
+    switch(category.toLowerCase()) {
+      case 'pack':
+        return 'bg-purple-100 text-purple-700';
+      case 'repas':
+        return 'bg-blue-100 text-blue-700';
+      case 'boisson':
+        return 'bg-green-100 text-green-700';
+      case 'dessert':
+        return 'bg-pink-100 text-pink-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   return (
     <div className="w-full max-w-[994px] rounded-[10px] flex items-center justify-between px-6 py-4 mx-auto"
@@ -24,7 +47,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggleSta
           alt={menu.nom}
           className="w-[60px] h-[60px] rounded-lg object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/images/default-menu.png';
+            (e.target as HTMLImageElement).src = '/logo512.png';
           }}
         />
         <div className="flex flex-col flex-1">
@@ -38,11 +61,10 @@ const MenuCard: React.FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggleSta
             }`}>
               {isActive ? 'Actif' : 'Inactif'}
             </span>
-            {menu.categorie === 'pack' && (
-              <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                Pack
-              </span>
-            )}
+            {/* Badge de catégorie pour tous les menus */}
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(menu.categorie)}`}>
+              {formatCategory(menu.categorie)}
+            </span>
           </div>
           <span className="text-sm font-semibold"
                 style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}>
@@ -57,6 +79,19 @@ const MenuCard: React.FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggleSta
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Bouton Voir détails pour les packs */}
+        {isPack && onViewPackDetails && (
+          <button
+            onClick={() => onViewPackDetails(menu.id)}
+            className="px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            title="Voir les détails du pack"
+          >
+            Détails
+          </button>
+        )}
+
+        {/* Bouton Activer/Désactiver */}
         <button
           onClick={() => onToggleStatus(menu.id, menu.status)}
           className={`px-3 py-1.5 rounded-lg text-white text-xs font-semibold ${

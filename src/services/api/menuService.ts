@@ -6,6 +6,19 @@ const API_BASE_URL = 'http://146.190.129.166:8000';
 
 export const menuService = {
   /**
+   * Récupérer toutes les catégories disponibles
+   */
+  async getCategories(): Promise<ApiResponse<string[]>> {
+    const token = localStorage.getItem('access_token');
+    
+    return httpClient.get<string[]>('menus/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  },
+
+  /**
    * Créer un nouveau menu avec FormData (contient une image)
    */
   async createMenu(data: CreateMenuRequest): Promise<ApiResponse<Menu>> {
@@ -17,7 +30,6 @@ export const menuService = {
     formData.append('categorie', data.categorie);
     formData.append('entreprise_id', data.entreprise_id.toString());
     formData.append('description', data.description);
-    formData.append('menus', JSON.stringify([]));
     
     if (data.image) {
       formData.append('image', data.image);
@@ -118,7 +130,7 @@ export const menuService = {
   async getMenus(entrepriseId: number, skip: number = 0, limit: number = 100): Promise<ApiResponse<Menu[]>> {
     const token = localStorage.getItem('access_token');
     
-    const response = await httpClient.get<{ detail: Menu[] }>(
+    const response = await httpClient.get<Menu[]>(
       `menus/${entrepriseId}?skip=${skip}&limit=${limit}`,
       {
         headers: {
@@ -127,9 +139,9 @@ export const menuService = {
       }
     );
 
-    if (response.data?.detail) {
+    if (response.data) {
       return {
-        data: response.data.detail,
+        data: response.data,
         statusCode: response.statusCode
       };
     }
@@ -146,7 +158,7 @@ export const menuService = {
   async getPackDetails(packId: number): Promise<ApiResponse<Menu>> {
     const token = localStorage.getItem('access_token');
     
-    const response = await httpClient.get<{ detail: Menu[] }>(
+    const response = await httpClient.get<Menu[]>(
       `menus/pack/${packId}`,
       {
         headers: {
@@ -155,9 +167,9 @@ export const menuService = {
       }
     );
 
-    if (response.data?.detail && response.data.detail.length > 0) {
+    if (response.data && response.data.length > 0) {
       return {
-        data: response.data.detail[0],
+        data: response.data[0],
         statusCode: response.statusCode
       };
     }

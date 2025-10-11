@@ -19,11 +19,15 @@ export interface UpdateTableRequest {
   ordre?: number;
 }
 
-export interface GetTablesResponse {
-  detail: Table[];
-}
-
 export interface TableFormData {
   nom: string;
   ordre: string;
+}
+
+export interface ActivateTablesRequest {
+  tableIds: number[];
+}
+
+export interface DeactivateTablesRequest {
+  tableIds: number[];
 }

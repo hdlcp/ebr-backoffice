@@ -8,9 +8,10 @@ interface MenuListProps {
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleStatus: (id: number, currentStatus: number) => void;
+  onViewPackDetails?: (id: number) => void;
 }
 
-const MenuList: React.FC<MenuListProps> = ({ menus, onEdit, onDelete, onToggleStatus }) => {
+const MenuList: React.FC<MenuListProps> = ({ menus, onEdit, onDelete, onToggleStatus, onViewPackDetails }) => {
   if (menus.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg">
@@ -30,6 +31,7 @@ const MenuList: React.FC<MenuListProps> = ({ menus, onEdit, onDelete, onToggleSt
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleStatus={onToggleStatus}
+          onViewPackDetails={onViewPackDetails}
         />
       ))}
     </div>

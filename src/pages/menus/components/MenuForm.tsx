@@ -1,6 +1,7 @@
 // src/pages/menus/components/MenuForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MenuFormData } from '../../../types/menu';
+import { menuService } from '../../../services/api/menuService';
 import { colors } from '../../../config/colors';
 
 interface MenuFormProps {
@@ -19,6 +20,28 @@ const MenuForm: React.FC<MenuFormProps> = ({ onCancel, onSubmit, isLoading }) =>
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Charger les catégories au montage
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await menuService.getCategories();
+      if (response.data) {
+        // Filtrer pour exclure "pack" des catégories normales
+        const filteredCategories = response.data.filter(cat => cat.toLowerCase() !== 'pack');
+        setCategories(filteredCategories);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des catégories:', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -50,6 +73,10 @@ const MenuForm: React.FC<MenuFormProps> = ({ onCancel, onSubmit, isLoading }) =>
     if (validateForm()) {
       onSubmit(formData);
     }
+  };
+
+  const formatCategoryLabel = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
   return (
@@ -93,15 +120,18 @@ const MenuForm: React.FC<MenuFormProps> = ({ onCancel, onSubmit, isLoading }) =>
         <div>
           <select
             value={formData.categorie}
-            onChange={(e) => setFormData({...formData, categorie: e.target.value as any})}
+            onChange={(e) => setFormData({...formData, categorie: e.target.value})}
             className={`w-full h-[56px] px-4 rounded-[10px] border-none outline-none ${
               errors.categorie ? 'ring-2 ring-red-500' : ''
             }`}
             style={{ backgroundColor: colors.white, fontFamily: 'Montserrat, sans-serif' }}
-            disabled={isLoading}>
-            <option value="">Choisissez la catégorie</option>
-            <option value="boissons">Boissons</option>
-            <option value="repas">Repas</option>
+            disabled={isLoading || loadingCategories}>
+            <option value="">
+              {loadingCategories ? 'Chargement des catégories...' : 'Choisissez la catégorie'}
+            </option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{formatCategoryLabel(cat)}</option>
+            ))}
           </select>
           {errors.categorie && <p className="text-red-500 text-sm mt-1">{errors.categorie}</p>}
         </div>
@@ -147,7 +177,7 @@ const MenuForm: React.FC<MenuFormProps> = ({ onCancel, onSubmit, isLoading }) =>
 
         <div className="flex gap-4 pt-4">
           <button onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || loadingCategories}
                   className="flex-1 h-[56px] rounded-[10px] text-white font-bold text-lg disabled:opacity-50"
                   style={{ backgroundColor: colors.primary, fontFamily: 'Montserrat, sans-serif' }}>
             {isLoading ? 'AJOUT EN COURS...' : 'AJOUTER'}
@@ -163,5 +193,6 @@ const MenuForm: React.FC<MenuFormProps> = ({ onCancel, onSubmit, isLoading }) =>
     </div>
   );
 };
+
 
 export default MenuForm;

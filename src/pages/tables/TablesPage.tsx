@@ -103,23 +103,33 @@ const TablesPage: React.FC<CommonPageProps> = ({
   };
 
   const handleToggleTablesStatus = async () => {
-    try {
-      const promises = tables.map(table => 
-        tablesActive 
-          ? tableService.deactivateTable(table.id)
-          : tableService.activateTable(table.id)
-      );
+    if (tables.length === 0) {
+      alert('Aucune table à activer/désactiver');
+      return;
+    }
 
-      await Promise.all(promises);
-      setTablesActive(!tablesActive);
-      
-      alert(tablesActive 
-        ? 'Toutes les tables ont été désactivées' 
-        : 'Toutes les tables ont été activées'
-      );
-      
-      // Recharger les tables
-      loadTables();
+    try {
+      // Récupérer tous les IDs des tables
+      const tableIds = tables.map(table => table.id);
+
+      // Appeler la route appropriée avec tous les IDs
+      const response = tablesActive 
+        ? await tableService.deactivateTables(tableIds)
+        : await tableService.activateTables(tableIds);
+
+      if (response.statusCode === 200 || response.data) {
+        setTablesActive(!tablesActive);
+        
+        alert(tablesActive 
+          ? 'Toutes les tables ont été désactivées' 
+          : 'Toutes les tables ont été activées'
+        );
+        
+        // Recharger les tables
+        loadTables();
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
     } catch (err) {
       console.error('Erreur lors du changement de statut:', err);
       alert('Erreur lors du changement de statut des tables');

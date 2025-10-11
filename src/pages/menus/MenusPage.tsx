@@ -69,7 +69,6 @@ const MenusPage: React.FC<CommonPageProps> = ({
         image: formData.image,
         entreprise_id: parseInt(activeCompany.id),
         description: formData.description,
-        menus: []
       });
 
       if (response.data) {
