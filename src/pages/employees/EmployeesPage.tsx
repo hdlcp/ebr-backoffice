@@ -5,7 +5,8 @@ import Header from '../../components/layout/Header';
 import { CommonPageProps } from '../../types/common';
 import EmployeeForm from './components/EmployeeForm';
 import EmployeeList from './components/EmployeeList';
-import { Employee, EmployeeFormData } from '../../types/employee';
+import EditEmployeeModal from './components/EditEmployeeModal';
+import { Employee, EmployeeFormData, UpdateEmployeeRequest } from '../../types/employee';
 import { employeeService } from '../../services/api/employeeService';
 import { colors } from '../../config/colors';
 
@@ -20,11 +21,11 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployeeForEdit, setSelectedEmployeeForEdit] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [error, setError] = useState('');
 
-  // Charger les employés au montage et quand l'entreprise change
   useEffect(() => {
     loadEmployees();
   }, [activeCompany]);
@@ -34,7 +35,7 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
     setError('');
     
     try {
-      const entrepriseId = parseInt(activeCompany.id);
+      const entrepriseId = activeCompany.id;
       const response = await employeeService.getEmployees({
         entreprise_id: entrepriseId,
         skip: 0,
@@ -65,63 +66,97 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
         lastname: formData.lastname,
         email: formData.email,
         role: formData.role,
-        matricule: formData.matricule,
-        entreprise_id: formData.entreprise_id,
-        password: formData.password
+        is_active: true,
+        password: formData.password,
+        matricule: '' // Champ vide comme requis
       });
 
       if (response.data) {
-        // Ajouter le nouvel employé à la liste
         const newEmployee: Employee = {
           ...response.data,
           isOpen: false
         };
         setEmployees([...employees, newEmployee]);
         setShowAddForm(false);
-        
-        alert(`Employé ${response.data.username} ajouté avec succès!`);
+        alert(`Employé ${response.data.firstname} ${response.data.lastname} ajouté avec succès!`);
       } else if (response.error) {
         setError(response.error);
         alert(`Erreur: ${response.error}`);
       }
     } catch (err) {
-      console.error("Erreur lors de l'ajout:", err);
-      setError("Erreur lors de l'ajout de l'employé");
-      alert("Erreur lors de l'ajout de l'employé");
+      console.error('Erreur lors de l\'ajout:', err);
+      setError('Erreur lors de l\'ajout de l\'employé');
+      alert('Erreur lors de l\'ajout de l\'employé');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleToggleOpen = (id: string) => {
-    setEmployees(employees.map(emp => 
-      emp.id.toString() === id ? { ...emp, isOpen: !emp.isOpen } : emp
-    ));
+  const handleToggleOpen = async (employeeId: number, currentState: boolean) => {
+    try {
+      const response = currentState 
+        ? await employeeService.closeJournee(employeeId)
+        : await employeeService.openJournee(employeeId);
+
+      if (response.data || response.statusCode === 200) {
+        setEmployees(employees.map(emp => 
+          emp.id === employeeId ? { ...emp, isOpen: !currentState } : emp
+        ));
+        alert(currentState ? 'Journée fermée avec succès' : 'Journée ouverte avec succès');
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+      alert('Erreur lors de l\'ouverture/fermeture de la journée');
+    }
   };
 
-  const handleEdit = (id: string) => {
-    console.log('Modifier employé:', id);
-    alert('Fonctionnalité de modification en cours de développement');
+  const handleEdit = (employeeId: number) => {
+    const employee = employees.find(emp => emp.id === employeeId);
+    if (employee) {
+      setSelectedEmployeeForEdit(employee);
+    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleEditSubmit = async (employeeId: number, updateData: UpdateEmployeeRequest) => {
+    setIsLoading(true);
+
+    try {
+      const response = await employeeService.updateEmployee(employeeId, updateData);
+
+      if (response.data || response.statusCode === 200) {
+        await loadEmployees();
+        setSelectedEmployeeForEdit(null);
+        alert('Employé modifié avec succès!');
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la modification:', err);
+      alert('Erreur lors de la modification de l\'employé');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (employeeId: number) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet employé ?')) {
       return;
     }
 
     try {
-      const employeeId = parseInt(id);
       const response = await employeeService.deleteEmployee(employeeId);
 
       if (response.statusCode === 200 || response.data) {
-        setEmployees(employees.filter(emp => emp.id.toString() !== id));
+        setEmployees(employees.filter(emp => emp.id !== employeeId));
         alert('Employé supprimé avec succès');
       } else if (response.error) {
         alert(`Erreur: ${response.error}`);
       }
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
-      alert("Erreur lors de la suppression de l'employé");
+      alert('Erreur lors de la suppression de l\'employé');
     }
   };
 
@@ -135,7 +170,6 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={onAddCompany}
       />
 
       <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
@@ -172,12 +206,6 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
               </div>
-            ) : employees.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Aucun employé pour le moment. Cliquez sur "AJOUTER +" pour en créer un.
-                </p>
-              </div>
             ) : (
               <EmployeeList 
                 employees={employees}
@@ -189,13 +217,22 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
           </>
         ) : (
           <EmployeeForm 
+            entrepriseId={activeCompany.id}
             onCancel={() => setShowAddForm(false)}
             onSubmit={handleAddEmployee}
             isLoading={isLoading}
-            entrepriseId={parseInt(activeCompany.id)} // ✅ passage de l'entreprise au formulaire
           />
         )}
       </div>
+
+      {selectedEmployeeForEdit && (
+        <EditEmployeeModal 
+          employee={selectedEmployeeForEdit}
+          onClose={() => setSelectedEmployeeForEdit(null)}
+          onSubmit={handleEditSubmit}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };

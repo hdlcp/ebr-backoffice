@@ -5,9 +5,9 @@ import { colors } from '../../../config/colors';
 
 interface EmployeeCardProps {
   employee: Employee;
-  onToggleOpen: (id: string) => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onToggleOpen: (id: number, currentState: boolean) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const EmployeeCard: React.FC<EmployeeCardProps> = ({ 
@@ -34,7 +34,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
             {fullName}
           </span>
           
-          {/* Badge statut */}
+          {/* Badge statut Actif/Inactif */}
           <span 
             className={`px-2 py-0.5 rounded text-xs font-medium ${
               isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
@@ -43,6 +43,16 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
           >
             {isActive ? 'Actif' : 'Inactif'}
           </span>
+
+          {/* Badge "Journée ouverte" pour les gérants */}
+          {employee.role === 'gerant' && employee.isOpen && (
+            <span 
+              className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              Journée ouverte
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -50,7 +60,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
             className="text-xs lg:text-sm capitalize"
             style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.secondary }}
           >
-            {employee.role === 'gerant' ? 'Gérant' : 'Serveur'}
+            @{employee.role}
           </span>
           
           <span 
@@ -80,10 +90,10 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
       {/* Actions */}
       <div className="flex items-center gap-2 lg:gap-4 ml-4">
-        {/* Bouton Ouvrir/Fermer pour les gérants */}
+        {/* Bouton Ouvrir/Fermer pour les gérants uniquement */}
         {employee.role === 'gerant' && (
           <button
-            onClick={() => onToggleOpen(employee.id.toString())}
+            onClick={() => onToggleOpen(employee.id, employee.isOpen || false)}
             className="w-[100px] lg:w-[130px] h-[36px] lg:h-[40px] rounded-[20px] text-white font-bold text-xs lg:text-sm transition-all duration-200 hover:opacity-90"
             style={{
               backgroundColor: employee.isOpen ? colors.danger : colors.primary,
@@ -95,9 +105,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
           </button>
         )}
 
-        {/* Icône de modification */}
+        {/* Bouton Modifier */}
         <button
-          onClick={() => onEdit(employee.id.toString())}
+          onClick={() => onEdit(employee.id)}
           className="w-[30px] h-[30px] flex items-center justify-center text-orange-500 hover:text-orange-600 transition-colors"
           title="Modifier"
         >
@@ -106,9 +116,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
           </svg>
         </button>
 
-        {/* Icône de suppression */}
+        {/* Bouton Supprimer */}
         <button
-          onClick={() => onDelete(employee.id.toString())}
+          onClick={() => onDelete(employee.id)}
           className="w-[30px] h-[30px] flex items-center justify-center text-red-500 hover:text-red-600 transition-colors"
           title="Supprimer"
         >

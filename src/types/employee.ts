@@ -11,8 +11,7 @@ export interface Employee {
   role: EmployeeRole;
   is_active: boolean;
   matricule: string;
-  entreprise_id: number;
-  isOpen?: boolean; // Pour l'UI locale
+  isOpen?: boolean; // Pour l'UI locale (état de la journée)
 }
 
 export interface CreateEmployeeRequest {
@@ -21,13 +20,12 @@ export interface CreateEmployeeRequest {
   lastname: string;
   email: string;
   role: EmployeeRole;
-  matricule: string;
-  entreprise_id: number;
+  is_active: boolean;
   password: string;
+  matricule: string; // Champ vide envoyé lors de la création
 }
 
 export interface CreateEmployeeResponse {
-  id: number;
   username: string;
   firstname: string;
   lastname: string;
@@ -35,7 +33,17 @@ export interface CreateEmployeeResponse {
   role: EmployeeRole;
   is_active: boolean;
   matricule: string;
-  entreprise_id: number;
+  id: number;
+}
+
+export interface UpdateEmployeeRequest {
+  username?: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  role?: EmployeeRole;
+  is_active?: boolean;
+  password?: string;
 }
 
 export interface GetEmployeesParams {
@@ -50,8 +58,7 @@ export interface EmployeeFormData {
   lastname: string;
   email: string;
   role: EmployeeRole;
-  matricule: string;
-  entreprise_id: number;
   password: string;
   confirmPassword: string;
+  entreprise_id: number;
 }

@@ -7,7 +7,7 @@ interface EmployeeFormProps {
   onCancel: () => void;
   onSubmit: (employee: EmployeeFormData) => void;
   isLoading?: boolean;
-  entrepriseId: number; // ➝ ajouté pour envoyer l'ID de l'entreprise
+  entrepriseId: number;
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ onCancel, onSubmit, isLoading = false, entrepriseId }) => {
@@ -17,7 +17,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onCancel, onSubmit, isLoadi
     lastname: '',
     email: '',
     role: 'serveur',
-    matricule: '',
     password: '',
     confirmPassword: '',
     entreprise_id: entrepriseId
@@ -36,7 +35,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onCancel, onSubmit, isLoadi
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email invalide';
     }
-    if (!formData.matricule.trim()) newErrors.matricule = 'Le matricule est requis';
     if (!formData.password) {
       newErrors.password = 'Le mot de passe est requis';
     } else if (formData.password.length < 6) {
@@ -149,22 +147,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onCancel, onSubmit, isLoadi
             <option value="serveur">Serveur(se)</option>
             <option value="gerant">Gérant(e)</option>
           </select>
-        </div>
-
-        {/* Matricule */}
-        <div>
-          <input
-            type="text"
-            placeholder="Matricule"
-            value={formData.matricule}
-            onChange={(e) => handleInputChange('matricule', e.target.value)}
-            className={`w-full h-[56px] px-4 rounded-[10px] outline-none ${
-              errors.matricule ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-green-500'
-            }`}
-            style={{ backgroundColor: colors.white, fontFamily: 'Montserrat, sans-serif' }}
-            disabled={isLoading}
-          />
-          {errors.matricule && <p className="text-red-500 text-sm mt-1">{errors.matricule}</p>}
         </div>
 
         {/* Mot de passe */}

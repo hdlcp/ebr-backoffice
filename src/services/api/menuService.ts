@@ -40,7 +40,6 @@ export const menuService = {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
-          // Pas de Content-Type pour FormData, le navigateur le gère automatiquement
         },
         body: formData
       });
@@ -83,7 +82,15 @@ export const menuService = {
     formData.append('categorie', 'pack');
     formData.append('entreprise_id', data.entreprise_id.toString());
     formData.append('description', data.description);
-    formData.append('menus', JSON.stringify(data.menus));
+    
+    // ✅ CORRECTION: Envoyer le tableau d'IDs correctement
+    // Option 1: Si l'API attend un JSON stringifié
+    //formData.append('menus', JSON.stringify(data.menus));
+    
+    // Option 2: Si l'API attend des valeurs séparées (décommentez si nécessaire)
+    data.menus.forEach(menuId => {
+    formData.append('menus', menuId.toString());
+    });
     
     if (data.image) {
       formData.append('image', data.image);
@@ -192,6 +199,11 @@ export const menuService = {
     if (data.categorie) formData.append('categorie', data.categorie);
     if (data.description) formData.append('description', data.description);
     if (data.image) formData.append('image', data.image);
+    
+    // ✅ Pour la mise à jour des packs
+    if (data.menus && data.menus.length > 0) {
+      formData.append('menus', JSON.stringify(data.menus));
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/menus/${menuId}`, {

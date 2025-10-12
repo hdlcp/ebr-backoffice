@@ -4,24 +4,21 @@ import {
   CreateEmployeeRequest, 
   CreateEmployeeResponse, 
   Employee,
-  GetEmployeesParams 
+  GetEmployeesParams,
+  UpdateEmployeeRequest 
 } from '../../types/employee';
-
-function getAuthHeaders() {
-  const token = localStorage.getItem('access_token');
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
-}
 
 export const employeeService = {
   /**
-   * Créer un nouvel employé (gérant ou serveur)
+   * Créer un nouvel employé (serveur ou gérant)
    */
   async createEmployee(data: CreateEmployeeRequest): Promise<ApiResponse<CreateEmployeeResponse>> {
+    const token = localStorage.getItem('access_token');
+    
     return httpClient.post<CreateEmployeeResponse>('users', data, {
-      headers: getAuthHeaders()
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
   },
 
@@ -29,12 +26,15 @@ export const employeeService = {
    * Récupérer tous les employés d'une entreprise
    */
   async getEmployees(params: GetEmployeesParams): Promise<ApiResponse<Employee[]>> {
+    const token = localStorage.getItem('access_token');
     const { entreprise_id, skip = 0, limit = 100 } = params;
     
     return httpClient.get<Employee[]>(
       `users/?entreprise_id=${entreprise_id}&skip=${skip}&limit=${limit}`,
       {
-        headers: getAuthHeaders()
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       }
     );
   },
@@ -42,9 +42,13 @@ export const employeeService = {
   /**
    * Mettre à jour un employé
    */
-  async updateEmployee(id: number, data: Partial<CreateEmployeeRequest>): Promise<ApiResponse<Employee>> {
+  async updateEmployee(id: number, data: UpdateEmployeeRequest): Promise<ApiResponse<Employee>> {
+    const token = localStorage.getItem('access_token');
+    
     return httpClient.put<Employee>(`users/${id}`, data, {
-      headers: getAuthHeaders()
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
   },
 
@@ -52,8 +56,44 @@ export const employeeService = {
    * Supprimer un employé
    */
   async deleteEmployee(id: number): Promise<ApiResponse<any>> {
+    const token = localStorage.getItem('access_token');
+    
     return httpClient.delete<any>(`users/${id}`, {
-      headers: getAuthHeaders()
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  },
+
+  /**
+   * Ouvrir la journée d'un gérant
+   */
+  async openJournee(userId: number): Promise<ApiResponse<any>> {
+    const token = localStorage.getItem('access_token');
+    
+    return httpClient.post<any>('journees/ouvrir', {
+      etat: 'ouverte',
+      user_id: userId
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  },
+
+  /**
+   * Fermer la journée d'un gérant
+   */
+  async closeJournee(userId: number): Promise<ApiResponse<any>> {
+    const token = localStorage.getItem('access_token');
+    
+    return httpClient.post<any>(`journees/fermer/${userId}`, {
+      etat: 'fermer',
+      user_id: userId
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
   }
 };

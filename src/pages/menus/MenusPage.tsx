@@ -5,13 +5,14 @@ import Header from '../../components/layout/Header';
 import MenuForm from './components/MenuForm';
 import PackForm from './components/PackForm';
 import MenuList from './components/MenuList';
+import PackDetailsModal from './components/PackDetailsModal';
+import EditMenuModal from './components/EditMenuModal';
 import { CommonPageProps } from '../../types/common';
 import { Menu, MenuFormData, PackFormData } from '../../types/menu';
 import { menuService } from '../../services/api/menuService';
 import { colors } from '../../config/colors';
 
 type ViewMode = 'list' | 'add-menu' | 'add-pack';
-type FilterTab = 'tous' | 'boissons' | 'repas' | 'pack';
 
 const MenusPage: React.FC<CommonPageProps> = ({ 
   userName,
@@ -23,27 +24,40 @@ const MenusPage: React.FC<CommonPageProps> = ({
   onLogout
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [activeTab, setActiveTab] = useState<FilterTab>('tous');
+  const [activeTab, setActiveTab] = useState<string>('tous');
   const [menus, setMenus] = useState<Menu[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [error, setError] = useState('');
+  const [selectedPackId, setSelectedPackId] = useState<number | null>(null);
+  const [selectedMenuForEdit, setSelectedMenuForEdit] = useState<Menu | null>(null);
 
-  // Charger les menus au montage et quand l'entreprise change
   useEffect(() => {
     loadMenus();
+    loadCategories();
   }, [activeCompany]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await menuService.getCategories();
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des catégories:', err);
+    }
+  };
 
   const loadMenus = async () => {
     setIsLoadingList(true);
     setError('');
     
     try {
-      const entrepriseId = parseInt(activeCompany.id);
+      const entrepriseId = activeCompany.id;
       const response = await menuService.getMenus(entrepriseId);
 
       if (response.data) {
-        // Filtrer pour ne garder que les menus actifs (status !== -1)
         const activeMenus = response.data.filter(m => m.status !== -1);
         setMenus(activeMenus);
       } else if (response.error) {
@@ -65,10 +79,10 @@ const MenusPage: React.FC<CommonPageProps> = ({
       const response = await menuService.createMenu({
         nom: formData.nom,
         prix: parseFloat(formData.prix),
-        categorie: formData.categorie as 'repas' | 'boissons',
+        categorie: formData.categorie,
         image: formData.image,
-        entreprise_id: parseInt(activeCompany.id),
-        description: formData.description,
+        entreprise_id: activeCompany.id,
+        description: formData.description
       });
 
       if (response.data) {
@@ -98,7 +112,7 @@ const MenusPage: React.FC<CommonPageProps> = ({
         prix: parseFloat(formData.prix),
         categorie: 'pack',
         image: null,
-        entreprise_id: parseInt(activeCompany.id),
+        entreprise_id: activeCompany.id,
         description: formData.description,
         menus: menuIds
       });
@@ -126,7 +140,6 @@ const MenusPage: React.FC<CommonPageProps> = ({
         : await menuService.activateMenu(menuId);
 
       if (response.data || response.statusCode === 200) {
-        // Mettre à jour le menu localement
         setMenus(menus.map(m => 
           m.id === menuId ? { ...m, status: isActive ? -1 : 1 } : m
         ));
@@ -141,8 +154,31 @@ const MenusPage: React.FC<CommonPageProps> = ({
   };
 
   const handleEdit = (menuId: number) => {
-    console.log('Modifier menu:', menuId);
-    alert('Fonctionnalité de modification en cours de développement');
+    const menu = menus.find(m => m.id === menuId);
+    if (menu) {
+      setSelectedMenuForEdit(menu);
+    }
+  };
+
+  const handleEditSubmit = async (menuId: number, updateData: any) => {
+    setIsLoading(true);
+
+    try {
+      const response = await menuService.updateMenu(menuId, updateData);
+
+      if (response.data || response.statusCode === 200) {
+        await loadMenus();
+        setSelectedMenuForEdit(null);
+        alert('Menu modifié avec succès!');
+      } else if (response.error) {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la modification:', err);
+      alert('Erreur lors de la modification du menu');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = async (menuId: number) => {
@@ -154,7 +190,6 @@ const MenusPage: React.FC<CommonPageProps> = ({
       const response = await menuService.deleteMenu(menuId);
 
       if (response.statusCode === 200 || response.data) {
-        // Retirer le menu de la liste
         setMenus(menus.filter(m => m.id !== menuId));
         alert('Menu supprimé avec succès');
       } else if (response.error) {
@@ -166,10 +201,21 @@ const MenusPage: React.FC<CommonPageProps> = ({
     }
   };
 
-  // Filtrer les menus selon l'onglet actif
+  const handleViewPackDetails = (packId: number) => {
+    setSelectedPackId(packId);
+  };
+
   const filteredMenus = activeTab === 'tous' 
     ? menus 
     : menus.filter(menu => menu.categorie === activeTab);
+
+  const tabs = [
+    { key: 'tous', label: 'TOUS' },
+    ...categories.map(cat => ({
+      key: cat,
+      label: cat.toUpperCase()
+    }))
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,13 +226,11 @@ const MenusPage: React.FC<CommonPageProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={onAddCompany}
       />
       
       <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">
         {viewMode === 'list' && (
           <>
-            {/* En-tête avec boutons */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
               <h1 className="text-2xl font-bold"
                   style={{ fontFamily: 'Montserrat, sans-serif', color: colors.text.primary }}>
@@ -213,14 +257,8 @@ const MenusPage: React.FC<CommonPageProps> = ({
               </div>
             )}
 
-            {/* Onglets de filtrage */}
-            <div className="flex gap-2 mb-6 overflow-x-auto">
-              {[
-                { key: 'tous' as FilterTab, label: 'TOUS' },
-                { key: 'boissons' as FilterTab, label: 'BOISSONS' },
-                { key: 'repas' as FilterTab, label: 'REPAS' },
-                { key: 'pack' as FilterTab, label: 'PACKS' }
-              ].map(tab => (
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {tabs.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
@@ -236,7 +274,6 @@ const MenusPage: React.FC<CommonPageProps> = ({
               ))}
             </div>
 
-            {/* Liste des menus */}
             {isLoadingList ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
@@ -247,6 +284,7 @@ const MenusPage: React.FC<CommonPageProps> = ({
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleStatus={handleToggleStatus}
+                onViewPackDetails={handleViewPackDetails}
               />
             )}
           </>
@@ -269,6 +307,23 @@ const MenusPage: React.FC<CommonPageProps> = ({
           />
         )}
       </div>
+
+      {selectedPackId && (
+        <PackDetailsModal 
+          packId={selectedPackId}
+          onClose={() => setSelectedPackId(null)}
+        />
+      )}
+
+      {selectedMenuForEdit && (
+        <EditMenuModal 
+          menu={selectedMenuForEdit}
+          categories={categories}
+          onClose={() => setSelectedMenuForEdit(null)}
+          onSubmit={handleEditSubmit}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };

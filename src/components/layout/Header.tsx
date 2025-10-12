@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { colors } from '../../config/colors';
 import { Company } from '../../types/company';
 
@@ -8,7 +9,6 @@ interface HeaderProps {
   companies: Company[];
   activeCompany: Company;
   onCompanySwitch: (company: Company) => void;
-  onAddCompany: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -16,10 +16,15 @@ const Header: React.FC<HeaderProps> = ({
   userRole = "Administrateur",
   companies,
   activeCompany,
-  onCompanySwitch,
-  onAddCompany
+  onCompanySwitch
 }) => {
+  const navigate = useNavigate();
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+
+  const handleAddCompany = () => {
+    setShowCompanyDropdown(false);
+    navigate('/add-company');
+  };
 
   return (
     <div 
@@ -61,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({
               className="text-sm font-semibold max-w-[120px] lg:max-w-[200px] truncate"
               style={{ color: colors.text.primary }}
             >
-              {activeCompany.name}
+              {activeCompany.raison_sociale}
             </span>
             
             {/* Flèche dropdown */}
@@ -118,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({
                           color: activeCompany.id === company.id ? colors.primary : colors.text.primary
                         }}
                       >
-                        {company.name}
+                        {company.raison_sociale}
                       </span>
                     </div>
                     
@@ -134,10 +139,7 @@ const Header: React.FC<HeaderProps> = ({
               {/* Bouton ajouter entreprise */}
               <div className="pt-2 border-t border-gray-100">
                 <button
-                  onClick={() => {
-                    onAddCompany();
-                    setShowCompanyDropdown(false);
-                  }}
+                  onClick={handleAddCompany}
                   className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                 >
                   <div 

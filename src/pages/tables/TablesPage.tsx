@@ -35,7 +35,7 @@ const TablesPage: React.FC<CommonPageProps> = ({
     setError('');
     
     try {
-      const entrepriseId = parseInt(activeCompany.id);
+      const entrepriseId = activeCompany.id;
       const response = await tableService.getTables(entrepriseId);
 
       if (response.data) {
@@ -59,7 +59,7 @@ const TablesPage: React.FC<CommonPageProps> = ({
       const response = await tableService.createTable({
         nom: formData.nom,
         ordre: parseInt(formData.ordre),
-        entreprise_id: parseInt(activeCompany.id)
+        entreprise_id: activeCompany.id
       });
 
       if (response.data) {
@@ -146,7 +146,6 @@ const TablesPage: React.FC<CommonPageProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={onAddCompany}
       />
 
       <div className="ml-0 lg:ml-[236px] mt-[68px] p-6">

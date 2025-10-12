@@ -77,11 +77,11 @@ const PackDetailsModal: React.FC<PackDetailsModalProps> = ({ packId, onClose }) 
               <div className="flex gap-4">
                 {packDetails.image && (
                   <img 
-                    src={`http://146.190.129.166:8000/${packDetails.image}`}
+                    src={`http://146.190.129.166:8000/images/${packDetails.image}`}
                     alt={packDetails.nom}
                     className="w-32 h-32 rounded-lg object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/default-menu.png';
+                      (e.target as HTMLImageElement).src = '/logo512.png';
                     }}
                   />
                 )}

@@ -47,7 +47,6 @@ const Layout: React.FC<LayoutProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={handleAddCompany}
       />
       
       {/* Contenu principal */}

@@ -5,7 +5,6 @@ import { LoginPage } from './pages/auth';
 import RegistrationPage from './pages/auth/RegistrationPage';
 import EmailValidationPage from './pages/auth/EmailValidationPage';
 import OffersPage from './pages/auth/OffersPage';
-import PaymentModal from './pages/auth/PaymentModal';
 import AddCompanyPage from './pages/auth/AddCompanyPage';
 import { EmployeesPage } from './pages/employees';
 import { MenusPage } from './pages/menus';
@@ -13,8 +12,8 @@ import { TablesPage } from './pages/tables';
 import { StatsPage } from './pages/stats';
 import { DashboardPage } from './pages/dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
-import { RegistrationFormData, Offer, PaymentInfo, RegistrationApiResponse } from './types/registration';
-import { CreateCompanyData, Company } from './types/company';
+import { RegistrationFormData, RegistrationApiResponse } from './types/registration';
+import { Company } from './types/company';
 import { LoginResponse, Entreprise } from './types/auth';
 import { authUtils } from './utils/authUtils';
 import './index.css';
@@ -56,8 +55,6 @@ function App() {
   // États pour le processus d'inscription
   const [registrationData, setRegistrationData] = useState<RegistrationFormData | null>(null);
   const [registeredUser, setRegisteredUser] = useState<RegistrationApiResponse | null>(null);
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
@@ -111,66 +108,35 @@ function App() {
     // La navigation sera gérée par React Router
   };
 
-  const handleOfferSelected = (offer: Offer) => {
-    setSelectedOffer(offer);
-    setShowPaymentModal(true);
-  };
-
-  const handlePayment = (paymentInfo: PaymentInfo) => {
-    console.log('Inscription complète:', {
-      user: registrationData,
-      offer: selectedOffer,
-      payment: paymentInfo
-    });
-    
-    setShowPaymentModal(false);
-    
-    // Réinitialiser les données d'inscription
-    setRegistrationData(null);
-    setSelectedOffer(null);
-  };
-
-  const handleClosePaymentModal = () => {
-    setShowPaymentModal(false);
-  };
-
   // Gestion du changement d'entreprise
   const handleCompanySwitch = (company: Entreprise) => {
     setActiveCompany(company);
   };
 
-  // Gestion des entreprises
-  const handleAddCompany = () => {
-    // La navigation sera gérée par React Router
-  };
-
-  const handleCompanyAdded = (companyData: CreateCompanyData) => {
-    // Créer une nouvelle entreprise
-    const newCompany: Entreprise = {
-      id: Date.now(),
-      raison_sociale: companyData.name,
-      telephone: '',
-      email: loggedInUser?.user.email || '',
-      site_web: '',
-      numero_ifu: '',
-      numero_registre_commerce: '',
-      is_active: true,
-      code_entreprise: Date.now().toString()
-    };
-
-    // Ajouter à la liste des entreprises de l'utilisateur connecté
-    if (loggedInUser) {
-      const updatedUser = {
-        ...loggedInUser,
-        entreprises: [...loggedInUser.entreprises, newCompany]
-      };
-      setLoggedInUser(updatedUser);
-      
-      // Mettre à jour le localStorage
-      localStorage.setItem('entreprises', JSON.stringify(updatedUser.entreprises));
+  // Fonction pour rafraîchir la liste des entreprises après ajout
+  const refreshUserCompanies = async () => {
+    try {
+      // Récupérer les données utilisateur mises à jour
+      const userData = authUtils.getUserData();
+      if (userData) {
+        // Vous pouvez ajouter ici un appel API pour récupérer la liste actualisée des entreprises
+        // Pour l'instant, on utilise les données du localStorage
+        setLoggedInUser(userData);
+        
+        if (userData.entreprises && userData.entreprises.length > 0) {
+          // Définir la dernière entreprise ajoutée comme active
+          const newCompanyId = localStorage.getItem('new_company_id');
+          if (newCompanyId) {
+            const newCompany = userData.entreprises.find(e => e.id.toString() === newCompanyId);
+            if (newCompany) {
+              setActiveCompany(newCompany);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement des entreprises:", error);
     }
-    
-    console.log('Nouvelle entreprise ajoutée:', newCompany);
   };
 
   // Convertir les entreprises au format Company pour le Header
@@ -178,32 +144,49 @@ function App() {
     if (!loggedInUser) return [];
     
     return loggedInUser.entreprises.map(entreprise => ({
-      id: entreprise.id.toString(),
-      name: entreprise.raison_sociale,
-      isActive: entreprise.is_active,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      id: entreprise.id,
+      raison_sociale: entreprise.raison_sociale,
+      telephone: entreprise.telephone,
+      email: entreprise.email,
+      site_web: entreprise.site_web,
+      numero_ifu: entreprise.numero_ifu,
+      numero_registre_commerce: entreprise.numero_registre_commerce,
+      is_active: entreprise.is_active,
+      code_entreprise: entreprise.code_entreprise
     }));
   };
 
   const getActiveCompanyForHeader = (): Company => {
     if (!activeCompany) {
       return {
-        id: '0',
-        name: 'Aucune entreprise',
-        isActive: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        id: 0,
+        raison_sociale: 'Aucune entreprise',
+        telephone: '',
+        email: '',
+        site_web: '',
+        numero_ifu: '',
+        numero_registre_commerce: '',
+        is_active: false,
+        code_entreprise: ''
       };
     }
     
     return {
-      id: activeCompany.id.toString(),
-      name: activeCompany.raison_sociale,
-      isActive: activeCompany.is_active,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      id: activeCompany.id,
+      raison_sociale: activeCompany.raison_sociale,
+      telephone: activeCompany.telephone,
+      email: activeCompany.email,
+      site_web: activeCompany.site_web,
+      numero_ifu: activeCompany.numero_ifu,
+      numero_registre_commerce: activeCompany.numero_registre_commerce,
+      is_active: activeCompany.is_active,
+      code_entreprise: activeCompany.code_entreprise
     };
+  };
+
+  // Gestion de l'ajout d'entreprise (navigation gérée par le Header directement)
+  const handleAddCompany = () => {
+    // Cette fonction n'est plus nécessaire car la navigation est gérée dans le Header
   };
 
   // Props communes pour les pages protégées
@@ -224,7 +207,7 @@ function App() {
       companies,
       activeCompany: activeCompanyData,
       onCompanySwitch: (company: Company) => {
-        const entreprise = loggedInUser.entreprises.find(e => e.id.toString() === company.id);
+        const entreprise = loggedInUser.entreprises.find(e => e.id === company.id);
         if (entreprise) {
           handleCompanySwitch(entreprise);
         }
@@ -269,24 +252,26 @@ function App() {
           <Route 
             path="/verification-code" 
             element={
-                <EmailValidationPage 
-                  userEmail={registrationData?.email || defaultRegistrationData.email}
-                  onValidationSuccess={handleEmailValidationSuccess}
-                />
-            } 
-          />
-          
-          <Route 
-            path="/offers" 
-            element={
-              <OffersPage 
-                  registrationData={registrationData || defaultRegistrationData} 
-                  registeredUser={registeredUser || defaultRegisteredUser} 
-                  onOfferSelected={handleOfferSelected}
+              <EmailValidationPage 
+                userEmail={registrationData?.email || defaultRegistrationData.email}
+                onValidationSuccess={handleEmailValidationSuccess}
               />
             } 
           />
-
+          
+          {/* Route des offres - accessible pour inscription ET après ajout entreprise */}
+          <Route 
+            path="/offre" 
+            element={
+              <OffersPage 
+                registrationData={registrationData || undefined}
+                registeredUser={registeredUser || undefined}
+                onOfferSelected={(offer) => {
+                  console.log('Offre sélectionnée:', offer);
+                }}
+              />
+            } 
+          />
 
           {/* Routes protégées */}
           <Route 
@@ -338,10 +323,7 @@ function App() {
             path="/add-company" 
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <AddCompanyPage 
-                  onAddCompany={handleCompanyAdded}
-                  onCancel={() => {}}
-                />
+                <AddCompanyPage />
               </ProtectedRoute>
             } 
           />
@@ -362,15 +344,6 @@ function App() {
             } 
           />
         </Routes>
-
-        {/* Modal de paiement */}
-        {showPaymentModal && selectedOffer && (
-          <PaymentModal 
-            selectedOffer={selectedOffer}
-            onPayment={handlePayment}
-            onClose={handleClosePaymentModal}
-          />
-        )}
       </div>
     </Router>
   );

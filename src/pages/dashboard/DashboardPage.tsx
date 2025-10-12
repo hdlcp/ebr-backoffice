@@ -167,7 +167,6 @@ const DashboardPage: React.FC<CommonPageProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={onAddCompany}
       />
 
       {/* Contenu principal */}
@@ -179,7 +178,7 @@ const DashboardPage: React.FC<CommonPageProps> = ({
               Tableau de Bord
             </h1>
             <p className="text-gray-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Vue d'ensemble de vos performances - {activeCompany.name}
+              Vue d'ensemble de vos performances - {activeCompany.raison_sociale}
             </p>
           </div>
 

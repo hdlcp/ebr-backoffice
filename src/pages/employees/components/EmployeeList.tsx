@@ -5,9 +5,9 @@ import { Employee } from '../../../types/employee';
 
 interface EmployeeListProps {
   employees: Employee[];
-  onToggleOpen: (id: string) => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onToggleOpen: (id: number, currentState: boolean) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const EmployeeList: React.FC<EmployeeListProps> = ({
@@ -16,6 +16,16 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
   onEdit,
   onDelete
 }) => {
+  if (employees.length === 0) {
+    return (
+      <div className="text-center py-12 bg-white rounded-lg">
+        <p className="text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          Aucun employé trouvé. Cliquez sur "AJOUTER +" pour en créer un.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {employees.map((employee) => (

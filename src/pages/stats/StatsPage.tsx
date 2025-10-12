@@ -286,7 +286,6 @@ const StatsPage: React.FC<CommonPageProps> = ({
         companies={companies}
         activeCompany={activeCompany}
         onCompanySwitch={onCompanySwitch}
-        onAddCompany={onAddCompany}
       />
 
       {/* Contenu principal */}

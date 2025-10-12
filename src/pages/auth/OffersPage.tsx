@@ -19,9 +19,9 @@ const offerColors: { [key: string]: string } = {
 };
 
 interface OffersPageProps {
-  registrationData: RegistrationFormData;
-  registeredUser: RegistrationApiResponse;
-  onOfferSelected: (offer: Offer) => void;
+  registrationData?: RegistrationFormData;
+  registeredUser?: RegistrationApiResponse;
+  onOfferSelected?: (offer: Offer) => void;
 }
 
 const OffersPage: React.FC<OffersPageProps> = ({
@@ -34,8 +34,18 @@ const OffersPage: React.FC<OffersPageProps> = ({
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fromAddCompany, setFromAddCompany] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Vérifier si on vient de la page d'ajout d'entreprise
+    const isFromAddCompany = localStorage.getItem('from_add_company') === 'true';
+    setFromAddCompany(isFromAddCompany);
+
+    // Vérifier si l'utilisateur est authentifié
+    const token = localStorage.getItem('access_token');
+    setIsAuthenticated(!!token);
+
     loadOffers();
   }, []);
 
@@ -52,14 +62,14 @@ const OffersPage: React.FC<OffersPageProps> = ({
     }
 
     // Transformer les données de l'API en format Offer
-    const transformedOffers: Offer[] = response.data.map((offreApi: OffreApi, index: number) => ({
+    const transformedOffers: Offer[] = response.data.map((offreApi: OffreApi) => ({
       id: offreApi.code,
       name: offreApi.nom,
       price: offreApi.prix,
       duration: '/ mois',
       features: offreApi.fonctionnalites.map(f => f.nom),
       color: offerColors[offreApi.code] || colors.primary,
-      isPopular: offreApi.code === 'S1' // Marquer Standard comme populaire
+      isPopular: offreApi.code === 'S1'
     }));
 
     setOffers(transformedOffers);
@@ -68,7 +78,48 @@ const OffersPage: React.FC<OffersPageProps> = ({
 
   const handleOfferSelect = (offer: Offer) => {
     setSelectedOfferId(offer.id);
-    onOfferSelected(offer);
+    if (onOfferSelected) {
+      onOfferSelected(offer);
+    }
+  };
+
+  const handleSkipOrChooseLater = () => {
+    // Nettoyer les flags
+    localStorage.removeItem('from_add_company');
+    localStorage.removeItem('new_company_id');
+
+    // Si l'utilisateur vient d'ajouter une entreprise et est connecté, rediriger vers le dashboard
+    if (fromAddCompany && isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      // Sinon, rediriger vers la page de connexion (cas d'inscription)
+      navigate('/login');
+    }
+  };
+
+  const handleContinueWithOffer = () => {
+    if (!selectedOfferId) {
+      setError("Veuillez sélectionner une offre");
+      return;
+    }
+
+    const selectedOffer = offers.find(o => o.id === selectedOfferId);
+    if (selectedOffer && onOfferSelected) {
+      onOfferSelected(selectedOffer);
+    }
+
+    // Nettoyer les flags
+    localStorage.removeItem('from_add_company');
+    localStorage.removeItem('new_company_id');
+
+    // Rediriger selon le contexte
+    if (fromAddCompany && isAuthenticated) {
+      // Utilisateur connecté qui vient d'ajouter une entreprise
+      navigate('/dashboard');
+    } else {
+      // Nouvel utilisateur en cours d'inscription
+      navigate('/login');
+    }
   };
 
   if (loading) {
@@ -89,7 +140,7 @@ const OffersPage: React.FC<OffersPageProps> = ({
     );
   }
 
-  if (error) {
+  if (error && offers.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
         <div
@@ -114,6 +165,9 @@ const OffersPage: React.FC<OffersPageProps> = ({
       </div>
     );
   }
+
+  // Déterminer le prénom à afficher
+  const firstName = registeredUser?.firstname || registrationData?.firstname || '';
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -144,15 +198,25 @@ const OffersPage: React.FC<OffersPageProps> = ({
             className="text-3xl font-bold text-white mb-4"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Bienvenue {registeredUser.firstname || registrationData.firstname} !
+            {firstName ? `Bienvenue ${firstName} !` : 'Bienvenue !'}
           </h1>
           <p
             className="text-xl text-white opacity-90"
             style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
-            Choisissez l'offre qui convient le mieux à votre entreprise
+            {fromAddCompany 
+              ? "Choisissez l'offre pour votre nouvelle entreprise"
+              : "Choisissez l'offre qui convient le mieux à votre entreprise"
+            }
           </p>
         </div>
+
+        {/* Message d'erreur si sélection requise */}
+        {error && offers.length > 0 && (
+          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center max-w-md mx-auto">
+            {error}
+          </div>
+        )}
 
         {/* Grille des offres */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -249,14 +313,29 @@ const OffersPage: React.FC<OffersPageProps> = ({
           ))}
         </div>
 
-        {/* Bouton passer */}
-        <div className="text-center mt-12">
-          <button
-            onClick={() => navigate('/login')}
-            className="text-white opacity-80 hover:underline text-sm"
-          >
-            Je choisirai plus tard
-          </button>
+        {/* Boutons d'action */}
+        <div className="text-center mt-12 space-y-4">
+          {/* Bouton continuer avec l'offre sélectionnée */}
+          {selectedOfferId && (
+            <button
+              onClick={handleContinueWithOffer}
+              className="px-8 py-3 bg-yellow-400 text-gray-900 rounded-[15px] font-bold text-lg hover:bg-yellow-500 transition-colors"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              CONTINUER AVEC CETTE OFFRE
+            </button>
+          )}
+
+          {/* Bouton passer */}
+          <div>
+            <button
+              onClick={handleSkipOrChooseLater}
+              className="text-white opacity-80 hover:underline text-sm hover:opacity-100 transition-opacity"
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
+            >
+              Je choisirai plus tard
+            </button>
+          </div>
         </div>
       </div>
     </div>
