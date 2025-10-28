@@ -16,7 +16,6 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
   companies,
   activeCompany,
   onCompanySwitch,
-  onAddCompany,
   onLogout
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -68,7 +67,8 @@ const EmployeesPage: React.FC<CommonPageProps> = ({
         role: formData.role,
         is_active: true,
         password: formData.password,
-        matricule: '' // Champ vide comme requis
+        matricule: '', // Champ vide comme requis
+        entreprise_id: activeCompany.id
       });
 
       if (response.data) {

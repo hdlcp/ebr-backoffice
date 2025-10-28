@@ -23,6 +23,7 @@ export interface CreateEmployeeRequest {
   is_active: boolean;
   password: string;
   matricule: string; // Champ vide envoyé lors de la création
+  entreprise_id: number;
 }
 
 export interface CreateEmployeeResponse {

@@ -91,11 +91,11 @@ const EditMenuModal: React.FC<EditMenuModalProps> = ({ menu, categories, onClose
                 Image actuelle :
               </p>
               <img 
-                src={`http://146.190.129.166:8000/${menu.image}`}
+                src={`http://146.190.129.166:8000/images/${menu.image}`}
                 alt={menu.nom}
                 className="w-32 h-32 rounded-lg object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/images/default-menu.png';
+                  (e.target as HTMLImageElement).src = '/logo512.png';
                 }}
               />
             </div>
